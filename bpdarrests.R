@@ -247,4 +247,3 @@ cwplot #Tile Plot of the heat map of time and week arrests by charge
 ctaplot #Tile Plot of Youth Arrests per month
 juvaplot #Tile plot of Juvenile Arrests per month
 actaplot #Tile Plot of Charges as Adults per month
-3
