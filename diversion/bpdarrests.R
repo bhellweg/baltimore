@@ -62,7 +62,8 @@ yarmap <- leaflet(yarrests, width = "100%") %>% addTiles() %>%
   addTiles(group = "OSM (default)") %>%
   addProviderTiles(provider = "Esri.WorldStreetMap",group = "World StreetMap") %>%
   addProviderTiles(provider = "Esri.WorldImagery",group = "World Imagery") %>%
-  addMarkers(lng = ~yarrests$long, lat = ~yarrests$lat, popup = yarrests$popup, clusterOptions = markerClusterOptions()) %>%
+  addMarkers(lng = ~yarrests$long, lat = ~yarrests$lat, popup = yarrests$popup, 
+             clusterOptions = markerClusterOptions()) %>%
   addLayersControl(
     baseGroups = c("OSM (default)","World StreetMap", "World Imagery"),
     options = layersControlOptions(collapsed = FALSE)
@@ -78,7 +79,8 @@ ydplot <- ggplot(yarrests_daily, aes(x = yarrests_daily$arrestdate, y = n)) +
   geom_line(color = "#F2CA27", size = 0.1) +
   geom_smooth(color = "#1A1A1A") +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%Y")) +
-  labs(x = "Date of Arrest", y = "Number of Arrests", title = "Daily Youth Arrests in Baltimore, 2010 to 2020")
+  labs(x = "Date of Arrest", y = "Number of Arrests", 
+       title = "Daily Youth Arrests in Baltimore, 2010 to 2020")
 ydplot
 
 #Graph Youth Charged as Adults by Day
@@ -90,7 +92,8 @@ asadplot <- ggplot(asadults_daily, aes(x = asadults_daily$arrestdate, y = n)) +
   geom_line(color = "#F2CA27", size = 0.1) +
   geom_smooth(method = "loess", span = .2) +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%Y")) +
-  labs(x = "Date of Arrest", y = "Number of Arrests", title = "Daily Youth Charged As Adult Arrests in Baltimore, 2010 to 2020")
+  labs(x = "Date of Arrest", y = "Number of Arrests", 
+       title = "Daily Youth Charged As Adult Arrests in Baltimore, 2010 to 2020")
 asadplot
 
 #Graph Youth Charged as Juveniles by Day
@@ -102,7 +105,8 @@ juvdplot <- ggplot(juvarrests_daily, aes(x = juvarrests_daily$arrestdate, y = n)
   geom_line(color = "#F2CA27", size = 0.1) +
   geom_smooth(method = "loess", span = .2) +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%Y")) +
-  labs(x = "Date of Arrest", y = "Number of Arrests", title = "Daily Youth Juvenile Charges in Baltimore, 2010 to 2020")
+  labs(x = "Date of Arrest", y = "Number of Arrests", 
+       title = "Daily Youth Juvenile Charges in Baltimore, 2010 to 2020")
 juvdplot
 
 #Creating a Time Heat Map
@@ -143,7 +147,8 @@ topcrimetime$dayofweek <- factor(topcrimetime$dayofweek, level = rev(dow_format)
 cwplot <- ggplot(topcrimetime, aes(x = hour, y = dayofweek, fill = count)) +
   geom_tile() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.6, size = 4)) +
-  labs(x = "Hour of Arrest", y = "Day of Week of Arrest", title = "Number of Youth Arrests 2010 to 2020 by Time and Day of Week") +
+  labs(x = "Hour of Arrest", y = "Day of Week of Arrest", 
+       title = "Number of Youth Arrests 2010 to 2020 by Time and Day of Week") +
   scale_fill_gradient(low = "white", high = "#2980B9") +
   facet_wrap(~ chargedesc, nrow = 6)
 cwplot
