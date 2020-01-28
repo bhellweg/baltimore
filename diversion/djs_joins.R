@@ -30,11 +30,11 @@ all_djs <- merge(offdisp,demo,by = c("REVACTOR_ID","REVLEGALINCIDENT_KEY"))
 
 #Create Baltimore tables
 
-baltdisp  <- disp %>% filter(COUNTY = "Baltimore City")
-baltoff   <- off %>% filter(COUNTY = "Baltimore City")
-baltdemo  <- demo %>% filter(COUNTY = "Baltimore City")
-baltodemo <- offdemo %>% filter(COUNTY = "Baltimore City")
-baltodisp <- offdisp %>% filter(COUNTY = "Baltimore City")
-baltall   <- all_djs %>% filter(COUNTY = "Baltimore City")
+baltdisp  <- disp %>% filter(COUNTY == "Baltimore City")
+baltoff   <- off %>% filter(COUNTY == "Baltimore City")
+baltdemo  <- demo %>% filter(COUNTY == "Baltimore City")
+baltodemo <- offdemo %>% filter(COUNTY == "Baltimore City")
+baltodisp <- offdisp %>% filter(COUNTY == "Baltimore City")
+baltall   <- all_djs %>% filter(COUNTY == "Baltimore City")
 
 
