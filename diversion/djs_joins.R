@@ -1,21 +1,17 @@
-library(excel.link)
+library(readxl)
+library(dplyr)
 
-#Load relevant files. Warning: this is a lot of information. The file size is listed after each sheet.
-disp1 <- xl.read.file(
-  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Disposition_FY2002_2010.xlsx"
-                    , password = "Djs01242020") #39MB
-disp2 <- xl.read.file(
-  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Disposition_FY2011_2019.xlsx"
-                      , password = "Djs01242020") #23MB
-off1 <- xl.read.file(
-  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Offense_FY2002_2010.xlsx"
-                     , password = "Djs01242020") #80MB
-off2 <- xl.read.file(
-  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Offense_FY2011_2019.xlsx"
-                     , password = "Djs01242020") #52MB
-demo <- xl.read.file(
-  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Complaint_Demographics_FY2002_2019.xlsx"
-                     , password = "Djs01242020") #42MB
+#Load relevant files. Warning: this is a lot of information. The file size is listed after each sheet.Total ~250MB
+disp1 <- read_excel(
+  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Disposition_2002_2010.xlsx") #39MB
+disp2 <- read_excel(
+  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Disposition_2011_2019.xlsx") #23MB
+off1 <- read_excel(
+  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Offense_2002_2010.xlsx") #80MB
+off2 <- read_excel(
+  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Offense_2011_2019.xlsx") #52MB
+demo <- read_excel(
+  "C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Djs01242020/Demographics_2002_2019.xlsx") #42MB
 
 #Merge the two large tables. This may also take a little while.
 
@@ -36,5 +32,3 @@ baltdemo  <- demo %>% filter(COUNTY == "Baltimore City")
 baltodemo <- offdemo %>% filter(COUNTY == "Baltimore City")
 baltodisp <- offdisp %>% filter(COUNTY == "Baltimore City")
 baltall   <- all_djs %>% filter(COUNTY == "Baltimore City")
-
-
