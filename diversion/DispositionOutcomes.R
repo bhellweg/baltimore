@@ -10,6 +10,7 @@ library(leaflet)
 library(dplyr)
 library(scales)
 
+
 disposition2002_2010 <- read_excel("~/Documents/OPI/data/UnlockedDJSData/Disposition_2002_2010.xlsx")
 disposition2011_2019 <- read_excel("~/Documents/OPI/data/UnlockedDJSData/Disposition_2011_2019.xlsx")
 offense2002_2010 <- read_excel("~/Documents/OPI/data/UnlockedDJSData/Offense_2002_2010.xlsx")
@@ -32,17 +33,37 @@ decision_frequency <- ggplot(decision_codes, aes(x=DETNDECIDE_CODE, y=decision_c
                             "DRNJ", "FAFP", "FDVP", "FDWA", "FFSA", 
                             "FIDA", "FNFA", "IIDA", "SAFO")) +
   scale_y_continuous(breaks=seq(0, 453128, 50000))
-  
-plot(decision_frequency)
+decision_frequency
 
 #----------Decision Frequency By County-----------------------
-decision_Allegany <- all_offense %>% 
+#-----------------Allegany----------------------------
+decisions_Allegany <- all_offense %>% 
   filter(COUNTY=="Allegany") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
+#if (nrow(decisions_Allegany) != 13) {
+#  for (row_num in nrow(decision_code); row_num++) {
+#    if (decision_codes$DETNDECIDE_CODE[row_num] != decisions_Allegany$DETNDECIDE_CODE) {
+#      rbind()
+#    }
+#  }
+#}
+
+totalAllegany <- sum(decisions_Allegany$count)
+
+alleganyPlot <- ggplot(decisions_Allegany, aes(x=DETNDECIDE_CODE, y=count/totalAllegany)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Dispostion type frequency, Allegany, 2002-2019")
+alleganyPlot
+
+#----------------Anne Arundel---------------------
 decisions_AnneArundel <- all_offense %>% 
   filter(COUNTY=="Anne Arundel") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
@@ -50,6 +71,18 @@ decisions_AnneArundel <- all_offense %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
+totalAnneArundel <- sum(decisions_AnneArundel$count)
+
+anneArundelPlot <- ggplot(decisions_AnneArundel, aes(x=DETNDECIDE_CODE, y=count/totalAnneArundel)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Anne Arundel, 2002-2019")
+anneArundelPlot
+
+#-------------------Baltimore City-------------------
 decisions_BaltimoreCity <- all_offense %>% 
   filter(COUNTY=="Baltimore City") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
@@ -57,6 +90,18 @@ decisions_BaltimoreCity <- all_offense %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
+totalBaltimoreCity <- sum(decisions_BaltimoreCity$count)
+
+baltimoreCityPlot <- ggplot(decisions_BaltimoreCity, aes(x=DETNDECIDE_CODE, y=count/totalBaltimoreCity)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, BaltimoreCity, 2002-2019")
+baltimoreCityPlot
+
+#----------------Baltimore County---------------------
 decisions_BaltimoreCounty <- all_offense %>% 
   filter(COUNTY=="Baltimore County") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
@@ -64,150 +109,421 @@ decisions_BaltimoreCounty <- all_offense %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Calvert <- all_offense %>% 
+totalBaltimoreCounty <- sum(decisions_BaltimoreCounty$count)
+
+baltimoreCountyPlot <- ggplot(decisions_BaltimoreCounty, aes(x=DETNDECIDE_CODE, y=count/totalBaltimoreCounty)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Baltimore County, 2002-2019")
+baltimoreCountyPlot
+
+#-------------------------Calvert-----------------------
+decisions_Calvert <- all_offense %>% 
   filter(COUNTY=="Calvert") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Caroline <- all_offense %>% 
+totalCalvert <- sum(decisions_Calvert$count)
+
+calvertPlot <- ggplot(decisions_Calvert, aes(x=DETNDECIDE_CODE, y=count/totalCalvert)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Calvert, 2002-2019")
+calvertPlot
+
+#-----------------Caroline-----------------------
+decisions_Caroline <- all_offense %>% 
   filter(COUNTY=="Caroline") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Carroll <- all_offense %>% 
+totalCaroline <- sum(decisions_Caroline$count)
+
+carolinePlot <- ggplot(decisions_Caroline, aes(x=DETNDECIDE_CODE, y=count/totalCaroline)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Caroline, 2002-2019")
+carolinePlot
+
+#--------------Carroll----------------------------
+decisions_Carroll <- all_offense %>% 
   filter(COUNTY=="Carroll") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Cecil <- all_offense %>% 
+totalCarroll <- sum(decisions_Carroll$count)
+
+carrollPlot <- ggplot(decisions_Carroll, aes(x=DETNDECIDE_CODE, y=count/totalCarroll)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Carroll, 2002-2019")
+carrollPlot
+
+#-------------------Cecil------------------------
+decisions_Cecil <- all_offense %>% 
   filter(COUNTY=="Cecil") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Charles <- all_offense %>% 
+totalCecil <- sum(decisions_Cecil$count)
+
+cecilPlot <- ggplot(decisions_Cecil, aes(x=DETNDECIDE_CODE, y=count/totalCecil)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Cecil, 2002-2019")
+cecilPlot
+
+#---------------Charles---------------
+decisions_Charles <- all_offense %>% 
   filter(COUNTY=="Charles") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Dorchester <- all_offense %>% 
+totalCharles <- sum(decisions_Charles$count)
+
+charlesPlot <- ggplot(decisions_Charles, aes(x=DETNDECIDE_CODE, y=count/totalCharles)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Charles, 2002-2019")
+charlesPlot
+
+#---------------------Dorchester-----------------------
+decisions_Dorchester <- all_offense %>% 
   filter(COUNTY=="Dorchester") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Frederick <- all_offense %>% 
+totalDorchester <- sum(decisions_Dorchester$count)
+
+dorchesterPlot <- ggplot(decisions_Dorchester, aes(x=DETNDECIDE_CODE, y=count/totalDorchester)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Dorchester, 2002-2019")
+dorchesterPlot
+
+#---------------------Frederick--------------------
+decisions_Frederick <- all_offense %>% 
   filter(COUNTY=="Frederick") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Garrett <- all_offense %>% 
+totalFrederick <- sum(decisions_Frederick$count)
+
+frederickPlot <- ggplot(decisions_Frederick, aes(x=DETNDECIDE_CODE, y=count/totalFrederick)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Frederick, 2002-2019")
+frederickPlot
+
+#------------------------Garrett--------------------
+decisions_Garrett <- all_offense %>% 
   filter(COUNTY=="Garrett") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Harford <- all_offense %>% 
+totalGarrett <- sum(decisions_Garrett$count)
+
+garrettPlot <- ggplot(decisions_Garrett, aes(x=DETNDECIDE_CODE, y=count/totalGarrett)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Garrett, 2002-2019")
+garrettPlot
+
+#---------------------Harford------------------------
+decisions_Harford <- all_offense %>% 
   filter(COUNTY=="Harford") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Howard <- all_offense %>% 
+totalHarford <- sum(decisions_Harford$count)
+
+harfordPlot <- ggplot(decisions_Harford, aes(x=DETNDECIDE_CODE, y=count/totalHarford)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Harford, 2002-2019")
+harfordPlot
+
+#--------------------Howard--------------------------
+decisions_Howard <- all_offense %>% 
   filter(COUNTY=="Howard") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Kent <- all_offense %>% 
+totalHoward <- sum(decisions_Howard$count)
+
+howardPlot <- ggplot(decisions_Howard, aes(x=DETNDECIDE_CODE, y=count/totalHoward)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Howard, 2002-2019")
+howardPlot
+
+#---------------------Kent--------------------------
+decisions_Kent <- all_offense %>% 
   filter(COUNTY=="Kent") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Montgomery <- all_offense %>% 
+totalKent <- sum(decisions_Kent$count)
+
+kentPlot <- ggplot(decisions_Kent, aes(x=DETNDECIDE_CODE, y=count/totalKent)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Kent, 2002-2019")
+kentPlot
+
+#-----------------------Montgomery-------------------
+decisions_Montgomery <- all_offense %>% 
   filter(COUNTY=="Montgomery") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-#doesn't work because of apostrophe
-decision_PrinceGeorge <- all_offense %>% 
-  filter(COUNTY=="Prince George's") %>%
+totalMontgomery <- sum(decisions_Montgomery$count)
+
+montgomeryPlot <- ggplot(decisions_Montgomery, aes(x=DETNDECIDE_CODE, y=count/totalMontgomery)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Montgomery, 2002-2019")
+
+plot(montgomeryPlot)
+
+#------------------Prince George's-------------------
+decisions_PrinceGeorge <- all_offense %>% 
+  filter(COUNTY=="Prince George`s") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-#Apostrophe problem -- no data extracted
-decision_QueenAnnes <- all_offense %>% 
-  filter(COUNTY=="Queen Anne's") %>%
+totalPrinceGeorge <- sum(decisions_PrinceGeorge$count)
+
+princeGeorgePlot <- ggplot(decisions_PrinceGeorge, aes(x=DETNDECIDE_CODE, y=count/totalPrinceGeorge)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Prince George's, 2002-2019")
+
+plot(princeGeorgePlot)
+
+#--------------------Queen Anne's---------------------
+#Apostrophe problem -- not an actual apostrophe but this works
+decisions_QueenAnnes <- all_offense %>% 
+  filter(COUNTY=="Queen Anne`s") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Somerset <- all_offense %>% 
+totalQueenAnnes <- sum(decisions_QueenAnnes$count)
+
+queenAnnesPlot <- ggplot(decisions_QueenAnnes, aes(x=DETNDECIDE_CODE, y=count/totalQueenAnnes)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Queen Anne's, 2002-2019")
+
+plot(queenAnnesPlot)
+
+#----------------------Somerset------------------------
+decisions_Somerset <- all_offense %>% 
   filter(COUNTY=="Somerset") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-#This currently isn't working bc of the apostrophe in the name
-decision_StMary <- all_offense %>% 
-  filter(COUNTY=="St. Mary's") %>%
+totalSomerset <- sum(decisions_Somerset$count)
+
+somersetPlot <- ggplot(decisions_Somerset, aes(x=DETNDECIDE_CODE, y=count/totalSomerset)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Somerset, 2002-2019")
+
+plot(somersetPlot)
+
+#----------------------St. Mary's--------------------
+decisions_StMary <- all_offense %>% 
+  filter(COUNTY=="St. Mary`s") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Talbot <- all_offense %>% 
+totalStMary <- sum(decisions_StMary$count)
+
+stMaryPlot <- ggplot(decisions_StMary, aes(x=DETNDECIDE_CODE, y=count/totalStMary)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, St. Mary's, 2002-2019")
+
+plot(stMaryPlot)
+
+#----------------------Talbot-----------------------
+decisions_Talbot <- all_offense %>% 
   filter(COUNTY=="Talbot") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Washington <- all_offense %>% 
+totalTalbot <- sum(decisions_Talbot$count)
+
+talbotPlot <- ggplot(decisions_Talbot, aes(x=DETNDECIDE_CODE, y=count/totalTalbot)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Talbot, 2002-2019")
+
+plot(talbotPlot)
+
+#--------------------Washington--------------------
+decisions_Washington <- all_offense %>% 
   filter(COUNTY=="Washington") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Wicomico <- all_offense %>% 
+totalWashington <- sum(decisions_Washington$count)
+
+washingtonPlot <- ggplot(decisions_Washington, aes(x=DETNDECIDE_CODE, y=count/totalWashington)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Washington, 2002-2019")
+
+plot(washingtonPlot)
+
+#------------------Wicomico-----------------------
+decisions_Wicomico <- all_offense %>% 
   filter(COUNTY=="Wicomico") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
-decision_Worcester <- all_offense %>% 
+totalWicomico <- sum(decisions_Wicomico$count)
+
+wicomicoPlot <- ggplot(decisions_Wicomico, aes(x=DETNDECIDE_CODE, y=count/totalWicomico)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Wicomico, 2002-2019")
+
+plot(wicomicoPlot)
+
+#-------------------Worcester----------------------
+decisions_Worcester <- all_offense %>% 
   filter(COUNTY=="Worcester") %>%
   select(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   group_by(DETNDECIDE_CODE, DECISIONINTK_TEXT) %>%
   summarize(count = n()) %>%
   arrange(DETNDECIDE_CODE)
 
+totalWorcester <- sum(decisions_Worcester$count)
 
-#TODO: plot all of the counties by number of occurrences, may want to examine percentages though
-# because some counties have a lot more arrests than others
+worcesterPlot <- ggplot(decisions_Worcester, aes(x=DETNDECIDE_CODE, y=count/totalWorcester)) +
+  geom_bar(stat="identity", color="black", fill="#f2ca47") +
+  geom_text(aes(label=scales::number(count)), vjust = -.5) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab("Relative Frequencies") + 
+  xlab("Outcome") +
+  labs(title="Disposition type frequency, Worcester, 2002-2019")
+worcesterPlot
+
+#currently having issue with the tiling, I think the error is with the function. Come back to this
+calculate_percent <- function(code) {
+  dcodecount <- tally(all_offense$DETNDECIDE_CODE == code)
+  percent <- dcodecount/tally(all_offense)
+  return(percent)
+}
+
+#all county tile
+all_county <- ggplot(all_offense, aes(x=DETNDECIDE_CODE, y=calculate_percent(x))) +
+  geom_tile() +
+  geom_bar(stat="identity", color="black", fill="#f2ca27") +
+  facet_wrap(~ all_offense$COUNTY, nrow=6) + 
+  ylim(0, NA)
+all_county
+
+
+
 
