@@ -3,7 +3,6 @@ library(readxl)
 library(formattable)
 library(lubridate)
 library(leaflet)
-library(dplyr)
 library(scales)
 
 #Loading Relevant Files
