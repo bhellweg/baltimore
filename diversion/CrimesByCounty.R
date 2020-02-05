@@ -12,7 +12,6 @@ offense2002_2010 <- read_excel("~/Documents/OPI/data/UnlockedDJSData/Offense_200
 offense2011_2019 <- read_excel("~/Documents/OPI/data/UnlockedDJSData/Offense_2011_2019.xlsx")
 
 all_offense <- rbind(offense2002_2010, offense2011_2019)
-#all_offense$OFFENSE_DATE <- as.Date(all_offense$OFFENSE_DATE)
 all_offense$year <- year(all_offense$OFFENSE_DATE)
 
 #Filter by individual (only see their most severe case)
@@ -20,13 +19,10 @@ onecase <- all_offense %>%
   group_by(REVLEGALINCIDENT_KEY) %>%
   top_n(-1,FINAL_RANK)
 
-
-marijuana <- filter(onecase, grepl('< 10 grams', OFFENSE_TEXT))
-
 #get number of offenses per year by county
 #filtering for marijuana charges (possession < 10 grams decriminalized in 2015)
 yroffense <- onecase %>%
-  filter(year > 2001, year < 2020, !grepl('< 10 grams', OFFENSE_TEXT)) %>%
+  filter(year > 2001, year < 2020) %>%
   group_by(COUNTY, year) %>%
   summarize(count = n())
 
@@ -46,6 +42,13 @@ countycrimesperyear
 
 #crime count by county
 countycrimes <- spread(yroffense, year, count)
+
+yearcount <- onecase %>%
+  filter(year > 2001, year < 2020) %>%
+  group_by(year) %>%
+  summarize(count = n())
+
+yearcount <- spread(yearcount, year, count)
 
 percent_change <- function(year1, year2) {
   return((year2 - year1) / year1)
@@ -67,9 +70,27 @@ change$'2017-2019 (% Change)' <- round((((countycrimes$'2019' - countycrimes$'20
 change$'Total % Change' <- round((((countycrimes$'2019' - countycrimes$'2002') / 
                                            countycrimes$'2002') *100), digits=2)
 
-
 formattable(change, align = c("l", rep("c", NCOL(change) - 1)))
 
+#Filtering all CDS offenses
+marijuana <- filter(onecase, grepl('Marijuana|CDS', OFFENSE_TEXT))
 
+marijuana_pre2014 <- marijuana %>%
+  filter(year < '2014' && year > '2008') %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count = n())
+marijuana_pre2014$Date <- '2009-2013'
 
+marijuana_post2014 <- marijuana %>%
+  filter(year > '2014') %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count = n())
+marijuana_post2014$Date <- '2015-2019'
 
+marijuana <- rbind(marijuana_pre2014, marijuana_post2014) 
+marijuana <- spread(marijuana, Date, count)
+
+marijuana <- rbind(marijuana, c("Total", sum(as.numeric(marijuana$`2009-2013`), na.rm = TRUE),
+                                sum(as.numeric(marijuana$`2015-2019`), na.rm = TRUE)))
+#display CDS offense data
+formattable(marijuana, align = c("l", rep("c", NCOL(marijuana))))
