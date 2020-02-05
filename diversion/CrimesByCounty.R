@@ -20,9 +20,13 @@ onecase <- all_offense %>%
   group_by(REVLEGALINCIDENT_KEY) %>%
   top_n(-1,FINAL_RANK)
 
+
+marijuana <- filter(onecase, grepl('< 10 grams', OFFENSE_TEXT))
+
 #get number of offenses per year by county
+#filtering for marijuana charges (possession < 10 grams decriminalized in 2015)
 yroffense <- onecase %>%
-  filter(year > 2001, year < 2020) %>%
+  filter(year > 2001, year < 2020, !grepl('< 10 grams', OFFENSE_TEXT)) %>%
   group_by(COUNTY, year) %>%
   summarize(count = n())
 
@@ -65,4 +69,7 @@ change$'Total % Change' <- round((((countycrimes$'2019' - countycrimes$'2002') /
 
 
 formattable(change, align = c("l", rep("c", NCOL(change) - 1)))
+
+
+
 
