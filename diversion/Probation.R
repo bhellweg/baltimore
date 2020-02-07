@@ -35,9 +35,9 @@ top_djs <- all_djs %>%
   group_by(REVLEGALINCIDENT_KEY) %>%
   top_n(-1, FINAL_RANK) %>%
   ungroup()
-
+View(top_djs)
 probation <- filter(top_djs, grepl("Probation|Supervision", DISPOSITION_TEXT))
-probation$year <- year(probation$COMPLAINT_DATE.x)
+probation$year <- year(probation$COMPLAINT_DATE.x) #COMPLAINT_DATE.x is from the offense table
 
 yrprobations <- probation %>%
   filter(year > 2002, year < 2018) %>%
@@ -62,7 +62,7 @@ probationperyear
 
 #Committed Cases
 committed <- filter(top_djs, grepl("Committed", DISPOSITION_TEXT))
-committed$year <- year(committed$COMPLAINT_DATE.x)
+committed$year <- year(committed$COMPLAINT_DATE.x) #.x means from the original offense table
 
 yrcommits <- committed %>%
   filter(year > 2002, year < 2018) %>%
