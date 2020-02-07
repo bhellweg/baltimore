@@ -30,14 +30,22 @@ all_djs <- left_join(offdisp,demographics,by = c("REVACTOR_ID","REVLEGALINCIDENT
 all_djs <- filter(all_djs, year(all_djs$COMPLAINT_DATE.x) > 2001)
 all_djs <- filter(all_djs, year(all_djs$COMPLAINT_DATE.x) < 2019)
 
-#all offenses ending in probation
-probation <- filter(all_djs, grepl("Probation", all_djs$DISPOSITION_TEXT))
+#find most severe case for an individual that was adjudicated
+top_djs <- all_djs %>%
+  group_by(REVLEGALINCIDENT_KEY) %>%
+  top_n(-1, FINAL_RANK) %>%
+  ungroup()
+
+probation <- filter(top_djs, grepl("Probation|Supervision", DISPOSITION_TEXT))
 probation$year <- year(probation$COMPLAINT_DATE.x)
 
 yrprobations <- probation %>%
-  filter(year > 2001, year < 2019) %>%
+  filter(year > 2002, year < 2018) %>%
   group_by(COUNTY, year) %>%
   summarize(count = n())
+
+probationsbycounty <- spread(yrprobations, year, count)
+formattable(probationsbycounty, align = c("l", rep("c", NCOL(probationsbycounty) - 1)))
 
 #tile by county, number of probations per year
 probationperyear <- ggplot(yrprobations, aes(x=year, y=count)) +
@@ -50,4 +58,28 @@ probationperyear <- ggplot(yrprobations, aes(x=year, y=count)) +
   facet_wrap(~ COUNTY, nrow = 6, scales = "free_y") +
   ylim(0,NA)
 probationperyear
+
+
+#Committed Cases
+committed <- filter(top_djs, grepl("Committed", DISPOSITION_TEXT))
+committed$year <- year(committed$COMPLAINT_DATE.x)
+
+yrcommits <- committed %>%
+  filter(year > 2002, year < 2018) %>%
+  group_by(COUNTY, year) %>%
+  summarize(count = n())
+
+commitsbycounty <- spread(yrcommits, year, count)
+formattable(commitsbycounty, align = c("l", rep("c", NCOL(commitsbycounty) - 1)))
+
+commitsperyear <- ggplot(yrprobations, aes(x=year, y=count)) +
+  geom_tile() +
+  geom_line(color = "#F2CA27", size = 0.1) +
+  geom_smooth(color = "#1A1A1A") +
+  scale_x_continuous(limits = c(2002, 2018)) +
+  labs(x = "Year", y = "Number of Commits", 
+       title = "Annual Commits to DJS/DSS in MD Counties") +
+  facet_wrap(~ COUNTY, nrow = 6, scales = "free_y") +
+  ylim(0,NA)
+commitsperyear
 
