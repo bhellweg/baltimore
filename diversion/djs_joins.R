@@ -26,7 +26,7 @@ off  <- rbind(off1,off2)
 offdemo <- merge(off,demo,by = c("REVACTOR_ID","REVLEGALINCIDENT_KEY"))
 offdisp <- merge(off,disp,by = c("REVACTOR_ID","REVLEGALINCIDENT_KEY"))
 all_djs <- merge(offdisp,demo,by = c("REVACTOR_ID","REVLEGALINCIDENT_KEY"))
-
+View(all_djs)
 #Create Baltimore tables
 
 baltdisp  <- disp %>% filter(COUNTY == "Baltimore City")
@@ -39,6 +39,12 @@ baltall$month <- as.Date(floor_date(baltall$COMPLAINT_DATE.x, unit = "months"))
 all_djs$month <- as.Date(floor_date(all_djs$COMPLAINT_DATE.x, unit = "months"))
 
 View(baltall)
+
+balt2019 <- baltall %>% filter(baltall$COMPLAINT_DATE > '6/30/2018') %>%
+  mutate(guilty = ifelse(ADJ_DECISION))
+  count(baltall$ADJ_OFFSEVTX,baltall$ADJ_DECISION_CODE) %>%
+  group_by(ADJ_OFFSEVTX)
+
 
 #Median Arrest Severity
 bdjs_month <-   aggregate(FINAL_RANK ~ month,baltall,median)
