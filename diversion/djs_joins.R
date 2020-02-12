@@ -138,7 +138,9 @@ nbaltperson <- persondjs %>%
 
 #Guilty rate at trials
 
-guiltyrate <- aggregate(guilty ~ COUNTY + month,trials,mean)
+guiltyrate <- trials %>% filter(month > '2014-12-31') %>% 
+  group_by(REVLEGALINCIDENT_KEY) %>%
+  count(REVLEGALINCIDENT_KEY,guilty = ceiling(mean(guilty)))
 View(guiltyrate)
 
 rtrials <- trials %>% filter(month > '2014-12-31')
@@ -159,15 +161,21 @@ grate
 
 #Informaling rate by County
 
-infrate <- aggregate(informaled ~ COUNTY + month,all_djs,mean)
+infrate <- all_djs  %>% filter(month > '2014-12-31') %>% 
+  group_by(REVLEGALINCIDENT_KEY) %>%
+  top_n(-1,FINAL_RANK) %>%
+  group_by(COUNTY) %>%
+  count(COUNTY,informaled = round(100*mean(informaled),1))
 View(infrate)
 
-informals <- all_djs %>% filter(month > '2014-12-31') %>%
-  filter(COUNTY!="Baltimore City")
+all_djs %>% filter(COUNTY == "Washington") %>% count()
+all_djs %>% filter(COUNTY == "Baltimore City") %>% count()
+all_djs %>% filter(informaled == 1) %>% View()
 
-mean(informals$informaled)
-rgmtable <-aggregate(guilty,rtrials,mean)
-View(rgmtable)
+informals <- all_djs %>% filter(month > '2014-12-31') %>%
+  group_by(REVLEGALINCIDENT_KEY) %>%
+  top_n(-1,FINAL_RANK) %>%
+  filter(COUNTY!="Baltimore City")
 
 irate <- ggplot(infrate, aes(x = infrate$month, y = infrate$informaled)) +
   geom_line(color = "#F2CA27", size = 0.1) +
@@ -178,4 +186,6 @@ irate <- ggplot(infrate, aes(x = infrate$month, y = infrate$informaled)) +
   labs(x = "Month", y = "Percent Informaled", 
        title = "Percent Informaled by County, 2002-2019")
 irate
+
+
 
