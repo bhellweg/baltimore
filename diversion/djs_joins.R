@@ -35,10 +35,20 @@ baltdemo  <- demo %>% filter(COUNTY == "Baltimore City")
 baltodemo <- offdemo %>% filter(COUNTY.y == "Baltimore City")
 baltodisp <- offdisp %>% filter(COUNTY.y == "Baltimore City")
 baltall   <- all_djs %>% filter(COUNTY == "Baltimore City")
+notbalt   <- all_djs %>% filter(COUNTY != "Baltimore City")
 baltall$month <- as.Date(floor_date(baltall$COMPLAINT_DATE.x, unit = "months"))
 all_djs$month <- as.Date(floor_date(all_djs$COMPLAINT_DATE.x, unit = "months"))
+all_djs$informaled <- if_else(all_djs$DETNDECIDE_DEC=="Informaled",1,0,0)
+trials  <- all_djs %>% filter(ADJ_DECISION_CODE == "U" | ADJ_DECISION_CODE == "S") %>%
+  mutate(guilty = if_else(ADJ_DECISION_CODE == "U",0,1,0))
 
 View(baltall)
+
+balt2019 <- baltall %>% filter(baltall$COMPLAINT_DATE > '6/30/2018') %>%
+  mutate(guilty = ifelse(ADJ_DECISION_CODE == "S",1,0)) %>%
+  count(baltall$ADJ_OFFSEVTX,baltall$ADJ_DECISION_CODE) %>%
+  group_by(ADJ_OFFSEVTX)
+
 
 #Median Arrest Severity
 bdjs_month <-   aggregate(FINAL_RANK ~ month,baltall,median)
@@ -113,8 +123,11 @@ View(persondjs)
 baltperson <- persondjs %>%
   filter(COUNTY == "Baltimore City")
 
+nbaltperson <- persondjs %>%
+  filter(COUNTY != "Baltimore City")
+
 #Percent of youth arrests in Maryland that are Felonies
-(persondjs %>%
+(nbaltperson %>%
     filter(OFFENSE_TYPE=='Felony')%>%
     nrow())/(persondjs%>%nrow())
 
@@ -122,3 +135,47 @@ baltperson <- persondjs %>%
 (baltperson %>%
   filter(OFFENSE_TYPE=='Felony')%>%
   nrow())/(baltperson%>%nrow())
+
+#Guilty rate at trials
+
+guiltyrate <- aggregate(guilty ~ COUNTY + month,trials,mean)
+View(guiltyrate)
+
+rtrials <- trials %>% filter(month > '2014-12-31')
+
+mean(rtrials$guilty)
+rgmtable <-aggregate(guilty,rtrials,mean)
+View(rgmtable)
+
+grate <- ggplot(guiltyrate, aes(x = guiltyrate$month, y = guiltyrate$guilty)) +
+  geom_line(color = "#F2CA27", size = 0.1) +
+  geom_smooth(color = "#1A1A1A") +
+  geom_tile()+
+  facet_wrap(~ COUNTY)+
+  scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%y")) +
+  labs(x = "Month", y = "Percent Sustained", 
+       title = "Percent Sustained in Court, 2002-2019")
+grate
+
+#Informaling rate by County
+
+infrate <- aggregate(informaled ~ COUNTY + month,all_djs,mean)
+View(infrate)
+
+informals <- all_djs %>% filter(month > '2014-12-31') %>%
+  filter(COUNTY!="Baltimore City")
+
+mean(informals$informaled)
+rgmtable <-aggregate(guilty,rtrials,mean)
+View(rgmtable)
+
+irate <- ggplot(infrate, aes(x = infrate$month, y = infrate$informaled)) +
+  geom_line(color = "#F2CA27", size = 0.1) +
+  geom_smooth(color = "#1A1A1A") +
+  geom_tile()+
+  facet_wrap(~ COUNTY,scales = "free_y")+
+  scale_x_date(breaks = date_breaks("2 years"), labels = date_format("%y")) +
+  labs(x = "Month", y = "Percent Informaled", 
+       title = "Percent Informaled by County, 2002-2019")
+irate
+

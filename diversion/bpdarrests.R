@@ -72,40 +72,40 @@ yarmap
 #Graph Youth Arrests by Day
 
 yarrests_daily <- yarrests %>%
-  count(arrestdate)
+  count(month)
 
-ydplot <- ggplot(yarrests_daily, aes(x = yarrests_daily$arrestdate, y = n)) +
+ydplot <- ggplot(yarrests_daily, aes(x = yarrests_daily$month, y = n)) +
   geom_line(color = "#F2CA27", size = 0.1) +
   geom_smooth(color = "#1A1A1A") +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%Y")) +
   labs(x = "Date of Arrest", y = "Number of Arrests", 
-       title = "Daily Youth Arrests in Baltimore, 2010 to 2020")
+       title = "Monthly Youth Arrests in Baltimore, 2010 to 2020")
 ydplot
 
 #Graph Youth Charged as Adults by Day
 
 asadults_daily <- asadults %>%
-  count(arrestdate)
+  count(month)
 
-asadplot <- ggplot(asadults_daily, aes(x = asadults_daily$arrestdate, y = n)) +
+asadplot <- ggplot(asadults_daily, aes(x = asadults_daily$month, y = n)) +
   geom_line(color = "#F2CA27", size = 0.1) +
   geom_smooth(method = "loess", span = .2) +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%Y")) +
   labs(x = "Date of Arrest", y = "Number of Arrests", 
-       title = "Daily Youth Charged As Adult Arrests in Baltimore, 2010 to 2020")
+       title = "Monthly Youth Charged As Adult Arrests in Baltimore, 2010 to 2020")
 asadplot
 
 #Graph Youth Charged as Juveniles by Day
 
 juvarrests_daily <- juvarrests %>%
-  count(arrestdate)
+  count(month)
 
-juvdplot <- ggplot(juvarrests_daily, aes(x = juvarrests_daily$arrestdate, y = n)) +
+juvdplot <- ggplot(juvarrests_daily, aes(x = juvarrests_daily$month, y = n)) +
   geom_line(color = "#F2CA27", size = 0.1) +
   geom_smooth(method = "loess", span = .2) +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%Y")) +
   labs(x = "Date of Arrest", y = "Number of Arrests", 
-       title = "Daily Youth Juvenile Charges in Baltimore, 2010 to 2020")
+       title = "Monthly Youth Juvenile Charges in Baltimore, 2010 to 2020")
 juvdplot
 
 #Creating a Time Heat Map
@@ -161,7 +161,7 @@ topcrimes <- yarrests %>%
   arrange(desc(count))
 
 topcrimeday <- yarrests %>%
-  filter(chargedesc %in% topcrimes$chargedesc[1:20]) %>%
+  filter(chargedesc %in% topcrimes$chargedesc[1:30]) %>%
   group_by(chargedesc, month) %>% 
   summarize(count = n())
 
@@ -172,7 +172,7 @@ ctaplot <- ggplot(topcrimeday, aes(x = topcrimeday$month, y = count)) +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%y")) +
   labs(x = "Date of Arrest", y = "Number of Arrests per Month", 
        title = "Monthly Arrests in Baltimore, 2010 to 2020")+
-  facet_wrap(~ chargedesc, nrow = 6)+
+  facet_wrap(~ chargedesc, scales = "free_y")+
   ylim(0,NA)
 ctaplot
 
@@ -184,7 +184,7 @@ asatopcrimes <- asadults %>%
   arrange(desc(count))
 
 asatopcrimeday <- asadults %>%
-  filter(chargedesc %in% asatopcrimes$chargedesc[1:20]) %>%
+  filter(chargedesc %in% asatopcrimes$chargedesc[1:16]) %>%
   group_by(chargedesc, month) %>% 
   summarize(count = n())
 
@@ -195,8 +195,9 @@ actaplot <- ggplot(asatopcrimeday, aes(x = asatopcrimeday$month, y = count)) +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%y")) +
   labs(x = "Date of Arrest", y = "Number of Arrests per Month", 
        title = "Monthly Charges as Adults in Baltimore, 2010 to 2020")+
-  facet_wrap(~ chargedesc, nrow = 6)+
+  facet_wrap(~ chargedesc, scales = "free_y")+
   ylim(0,NA)
+
 actaplot
 
 #Change in Charges as Juveniles Over Time
@@ -219,7 +220,7 @@ juvaplot <- ggplot(juvtopcrimeday, aes(x = juvtopcrimeday$month, y = count)) +
   scale_x_date(breaks = date_breaks("1 year"), labels = date_format("%y")) +
   labs(x = "Date of Arrest", y = "Number of Arrests per Month", 
        title = "Monthly Charges as Juveniles in Baltimore, 2010 to 2020")+
-  facet_wrap(~ chargedesc, nrow = 6)+
+  facet_wrap(~ chargedesc, scales = "free_y")+
   ylim(0,NA)
 juvaplot
 
