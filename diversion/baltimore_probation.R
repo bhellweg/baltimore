@@ -133,45 +133,62 @@ get_commits <- function(offense, county) {
   return(sum(as.numeric(offense_commits$count)))
 }
 
-probation_frequency <- function(offense_type, offense_count, county) {
+probation_frequency <- function(offense_type, county) {
   if (county == "all") {
+    all_accounts <- probation %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+      
     offense_table <- top_djs %>%
       filter(OFFENSE_TEXT == offense_type) %>%
       group_by(OFFENSE_TEXT) %>%
       summarize(count = n())
-    return(sum(as.numeric(offense_count/offense_table$count)))
+    return(sum(as.numeric(all_accounts$count/offense_table$count)))
     
   } else if (county == "no-baltimore") {
+    all_accounts <- probation %>%
+      filter(COUNTY != "Baltimore City") %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+    
     offense_table <- top_djs %>%
       filter(COUNTY != "Baltimore City") %>%
       filter(OFFENSE_TEXT == offense_type) %>%
       group_by(OFFENSE_TEXT) %>%
       summarize(count = n())
-    return(sum(as.numeric(offense_count/offense_table$count)))
+    return(sum(as.numeric(all_accounts$count/offense_table$count)))
     
   } else {
+    all_accounts <- probation %>%
+      filter(COUNTY == "Baltimore City") %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+    
     offense_table <- top_djs %>%
       filter(COUNTY == "Baltimore City") %>%
       filter(OFFENSE_TEXT == offense_type) %>%
       group_by(OFFENSE_TEXT) %>%
       summarize(count = n())
-    return(sum(as.numeric(offense_count/offense_table$count)))
+    return(sum(as.numeric(all_accounts$count/offense_table$count)))
     
   }
 }
 baltimore_outcomes <- baltimore_probation %>% select(OFFENSE_TEXT, count)
-baltimore_outcomes$ProbationChance <- mapply(FUN = probation_frequency, offense_type = all_md$OFFENSE_TEXT, 
-                                           offense_count = baltimore_outcomes$count, county="baltimore")
+baltimore_outcomes$ProbationChance <- mapply(FUN = probation_frequency, offense_type = baltimore_outcomes$OFFENSE_TEXT, 
+                                            county="baltimore")
 
 #include Baltimore in MD calculations to understand probability of being put on probation for a given crime
 all_md <- baltimore_outcomes %>% select(OFFENSE_TEXT, count)
 all_md$MDProbation <- mapply(FUN = probation_frequency, offense_type = all_md$OFFENSE_TEXT, 
-                             offense_count = baltimore_outcomes$count, county="all")
+                             county="all")
 
 #exclude Baltimore in calculations to understand being put on probation for a given crime
 no_baltimore <- baltimore_outcomes %>% select(OFFENSE_TEXT, count)
 no_baltimore$MDProbation <- mapply(FUN = probation_frequency, offense_type = no_baltimore$OFFENSE_TEXT, 
-                                   offense_count = baltimore_outcomes$count, county="no-baltimore")
+                                   county="no-baltimore")
 
 #BaltimoreProbations: frequency with which an individual was put on probation for a certain crime
 #MDProbation: The likelihood of being put on probation for a certain crime in MD
