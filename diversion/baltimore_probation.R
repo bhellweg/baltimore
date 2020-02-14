@@ -67,8 +67,12 @@ top_djs <- left_join(top_djs,demographics, by=c("REVACTOR_ID","REVLEGALINCIDENT_
 top_djs <- filter(top_djs, year(top_djs$COMPLAINT_DATE.x) > 2009)
 top_djs <- filter(top_djs, year(top_djs$COMPLAINT_DATE.x) < 2020)
 
-#All probationable offenses
-probation <- filter(top_djs, grepl("Probation|Supervision", DISPOSITION_TEXT))
+#All sustained, probationable offenses
+probation <- top_djs %>% 
+  filter(top_djs$ADJ_DECISION_CODE == "S") %>%
+  filter(grepl("Probation|Supervision", DISPOSITION_TEXT))
+  
+
 #COMPLAINT_DATE.x is from the offense table 
 probation$year <- year(probation$COMPLAINT_DATE.x)
 
@@ -87,7 +91,10 @@ md_probation <- probation %>%
   arrange(count)
 
 #All commitment offenses
-commit <- filter(top_djs, grepl("Commited|Commit", DISPOSITION_TEXT))
+commit <- top_djs %>%
+  filter(top_djs$ADJ_DECISION_CODE == "S") %>%
+  filter(grepl("Commited|Commit", DISPOSITION_TEXT))
+
 commit$year <- year(commit$COMPLAINT_DATE.x)
 
 #Commitment to DJS offenses in Baltimore
@@ -130,7 +137,6 @@ baltimore_resolved <- all_baltimore %>%
   filter(all_baltimore$DECISIONINTK_TEXT == "Resolved at Intake") %>%
   group_by(DECISIONINTK_TEXT) %>%
   summarize(count = n())
-
 
 get_commits <- function(offense, county) {
   offense_commits <- top_djs %>% 
@@ -214,11 +220,70 @@ new_md <- baltimore_probation %>% rename(BaltimoreCount = count) %>%
   arrange(-BaltimoreCount)
 View(new_md)
 
-#Some of the numbers generaged in new_md seems a little wonky so I'm going to want to look at those again
+#Calculate frequence of committment for various crimes
+commitment_frequency <- function(offense_type, county) {
+  if (county == "all") {
+    all_accounts <- commit %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+    
+    offense_table <- top_djs %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+    return(sum(as.numeric(all_accounts$count/offense_table$count)))
+    
+  } else if (county == "no-baltimore") {
+    all_accounts <- commit %>%
+      filter(COUNTY != "Baltimore City") %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+    
+    offense_table <- top_djs %>%
+      filter(COUNTY != "Baltimore City") %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+    return(sum(as.numeric(all_accounts$count/offense_table$count)))
+    
+  } else {
+    all_accounts <- commit %>%
+      filter(COUNTY == "Baltimore City") %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+    
+    offense_table <- top_djs %>%
+      filter(COUNTY == "Baltimore City") %>%
+      filter(OFFENSE_TEXT == offense_type) %>%
+      group_by(OFFENSE_TEXT) %>%
+      summarize(count = n())
+    return(sum(as.numeric(all_accounts$count/offense_table$count)))
+    
+  }
+}
 
+baltimore_committments <- baltimore_commit %>% select(OFFENSE_TEXT, count)
+baltimore_committments$BaltimoreCommitmentChance <- mapply(FUN = commitment_frequency, offense_type = baltimore_committments$OFFENSE_TEXT, 
+                                             county="baltimore")
 
-#For each of the crimes that someone was given probation for, how many times were they not given probation?
-#How many times were they committed, how many times did something else happen entirely?
+#include Baltimore in MD calculations to understand probability of being put on probation for a given crime
+all_md_commits <- baltimore_committments %>% select(OFFENSE_TEXT, count)
+all_md_commits$MDCommits <- mapply(FUN = commitment_frequency, offense_type = all_md_commits$OFFENSE_TEXT, 
+                             county="all")
 
+#exclude Baltimore in calculations to understand being put on probation for a given crime
+no_baltimore_commits <- baltimore_committments %>% select(OFFENSE_TEXT, count)
+no_baltimore_commits$MDCommits <- mapply(FUN = commitment_frequency, offense_type = no_baltimore_commits$OFFENSE_TEXT, 
+                                   county="no-baltimore")
 
-
+#BaltimoreProbations: frequency with which an individual was put on probation for a certain crime
+#ChanceMDCommit: The likelihood of being committed for a certain crime in MD
+#ChanceNoBaltimore: The likelihood of being committed for a certain crime in MD, excluding Baltimore
+md_commit_table <- baltimore_committments %>% rename(BaltimoreCount = count) %>%
+  mutate(ChanceMDCommit = all_md_commits$MDCommits) %>%
+  mutate(ChanceNoBaltimore = no_baltimore_commits$MDCommits) %>%
+  arrange(-BaltimoreCount)
+View(md_commit_table)
