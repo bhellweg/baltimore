@@ -81,28 +81,11 @@ num_arrests <- multiple_charge %>%
   ungroup()
 num_arrests <- rename(num_arrests, TotalArrests = count)
 
-#Add total number of arrests as extra field for multiple_charge table
-multiple_charge <- merge(multiple_charge, num_arrests, by="REVACTOR_ID")
-multiple_charge <- multiple_charge %>%
-  group_by(REVACTOR_ID) %>%
-  arrange(OFFENSE_DATE)
-
-#not working
-order <- function(arg1,arg2) {
-  balt_multiple_charge %>% filter(arg1 == REVACTOR_ID) %>%
-    filter(COMPLAINT_DATE.x < as.Date(arg2)) %>%
-    nrow()+1
-}
-
-balt_multiple_charge <- multiple_charge %>% filter(COUNTY == "Baltimore City")
-balt_multiple_charge$arrestnumber <- mapply(FUN = order,balt_multiple_charge$REVACTOR_ID,balt_multiple_charge$COMPLAINT_DATE.x)
-
-order(3082159, '2015-09-23')
-
 arrest_count <- num_arrests %>%
   group_by(TotalArrests) %>%
   summarize(count = n())
-  
+
+#All MD data
 arrest_count_frequency <- ggplot(arrest_count, aes(x=COUNT, y=count)) +
   geom_bar(stat = "identity", color="black", fill="#F2CA27") + 
   labs(title="Frequency of multiple arrests") +
@@ -110,22 +93,162 @@ arrest_count_frequency <- ggplot(arrest_count, aes(x=COUNT, y=count)) +
   ylab("# Individuals") 
 plot(arrest_count_frequency)
 
+#Add total number of arrests as extra field for multiple_charge table
+multiple_charge <- merge(multiple_charge, num_arrests, by="REVACTOR_ID")
+multiple_charge <- multiple_charge %>%
+  group_by(REVACTOR_ID) %>%
+  arrange(OFFENSE_DATE)
 
-#Average severity of second offense, average severity of 3rd offense
-crime_severity$`2nd` <- sum()
-
-#Other things to look at: How many people were put on probation and then violated probation 
-#within 12 months?
-
-
-
-#need to figure out how to assign a sequence number to each arrest for one individual
-assign_number <- function(id) {
-  all_instances <- multiple_charge %>%
-    dplyr::filter(REVACTOR_ID == id) %>%
-    dplyr::select(REVACTOR_ID, OFFENSE_DATE)
-  
-  all_instances$Sequence <- seq.int(nrow(all_instances))
-  
-  return(all_instances)
+#Assign an arrest number (sequence) to each arrest for each person
+#Takes a while to run (~15min)
+order <- function(arg1,arg2) {
+  balt_multiple_charge %>% filter(arg1 == REVACTOR_ID) %>%
+    filter(COMPLAINT_DATE.x < as.Date(arg2)) %>%
+    nrow()+1
 }
+
+#Look at charges only in Baltimore City
+balt_multiple_charge <- multiple_charge %>% filter(COUNTY == "Baltimore City")
+balt_multiple_charge$arrestnumber <- mapply(FUN = order,balt_multiple_charge$REVACTOR_ID,balt_multiple_charge$COMPLAINT_DATE.x)
+
+balt_multiple_charge$TotalArrests <- NULL
+
+balt_arrests <- balt_multiple_charge %>%
+  group_by(REVACTOR_ID) %>%
+  summarize(count = n()) %>%
+  ungroup()
+balt_arrests <- rename(balt_arrests, TotalArrests = count)
+
+balt_multiple_charge <- merge(balt_multiple_charge, balt_arrests, by="REVACTOR_ID")
+
+balt_count <- balt_arrests %>%
+  group_by(TotalArrests) %>%
+  summarize(count = n())
+
+#Bar plot for frequency of multiple offense individuals
+balt_frequency <- ggplot(balt_count, aes(x=TotalArrests, y=count)) +
+  geom_bar(stat = "identity", color="black", fill="#F2CA27") + 
+  labs(title="Frequency of multiple arrests in Baltimore City") +
+  xlab("# Arrests") + 
+  ylab("# Individuals") 
+plot(balt_frequency)
+
+#Super round about way to do this but I needed this to create the severity table
+crime_severity$REVACTOR_ID <- NULL
+crime_severity <- crime_severity %>% group_by(COUNTY) %>% summarize(count = n())
+
+#Crime severity as number of arrests increases
+severity <- crime_severity %>% select(COUNTY)
+first_crime <- balt_multiple_charge %>% filter(arrestnumber == 1)
+second_crimes <- balt_multiple_charge %>% filter(arrestnumber == 2)
+third_crimes <- balt_multiple_charge %>% filter(arrestnumber == 3)
+fourth_crime <- balt_multiple_charge %>% filter(arrestnumber == 4)
+fifth_crime <- balt_multiple_charge %>% filter(arrestnumber == 5)
+sixth_crime <- balt_multiple_charge %>% filter(arrestnumber == 6)
+seventh_crime <- balt_multiple_charge %>% filter(arrestnumber == 7)
+eigth_crime <- balt_multiple_charge %>% filter(arrestnumber == 8)
+ninth_crime <- balt_multiple_charge %>% filter(arrestnumber == 9)
+tenth_crime <- balt_multiple_charge %>% filter(arrestnumber == 10)
+severity$`1` <- sum(first_crime$FINAL_RANK)/nrow(first_crime)
+severity$`2` <- sum(second_crimes$FINAL_RANK)/nrow(second_crimes)
+severity$`3` <- sum(third_crimes$FINAL_RANK)/nrow(third_crimes)
+severity$`4` <- sum(fourth_crime$FINAL_RANK)/nrow(fourth_crime)
+severity$`5` <- sum(fifth_crime$FINAL_RANK)/nrow(fifth_crime)
+severity$`6` <- sum(sixth_crime$FINAL_RANK)/nrow(sixth_crime)
+severity$`7` <- sum(seventh_crime$FINAL_RANK)/nrow(seventh_crime)
+severity$`8` <- sum(eigth_crime$FINAL_RANK)/nrow(eigth_crime)
+severity$`9` <- sum(ninth_crime$FINAL_RANK)/nrow(ninth_crime)
+severity$`10` <- sum(tenth_crime$FINAL_RANK)/nrow(tenth_crime)
+
+sev <- gather(severity, OffenseNum, Count,`1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`)
+
+#Display the trends in severity for charges in Baltimore
+severity_trend <- ggplot(sev, aes(x=as.numeric(OffenseNum), y=Count, group=1)) +
+  geom_line(color = "black", size=0.1) +
+  geom_point(color = "#F2CA27", size = 2) +
+  scale_y_reverse() +
+  scale_x_continuous(breaks = seq(1, 10 ,1  )) +
+  labs(x = "Offense Number", y = "Average Severity", 
+       title = "Trends in offense severity by number of arrests")
+plot(severity_trend)
+
+
+#Crime severity of informaled charges
+balt_informal <- balt_multiple_charge %>% filter(DETNDECIDE_DEC == "Informaled")
+
+informaled_total <- balt_informal %>% 
+  group_by(arrestnumber) %>%
+  summarize(count = n())
+
+view(spread(informaled_total, arrestnumber, count))
+
+informaled_frequency <- ggplot(informaled_total, aes(x=arrestnumber, y=count)) +
+  geom_bar(stat = "identity", color="black", fill="#F2CA27") + 
+  labs(title="Arrest on which charge was informaled") +
+  xlab("Arrest #") + 
+  ylab("# Individuals") 
+plot(informaled_frequency)
+
+informaled <- severity %>% select(COUNTY)
+first_informaled <- balt_informal %>% filter(arrestnumber == 1)
+second_informaled <- balt_informal %>% filter(arrestnumber == 2)
+third_informaled <- balt_informal %>% filter(arrestnumber == 3)
+fourth_informaled <- balt_informal %>% filter(arrestnumber == 4)
+fifth_informaled <- balt_informal %>% filter(arrestnumber == 5)
+informaled$`1` <- sum(first_informaled$FINAL_RANK)/nrow(first_informaled)
+informaled$`2` <- sum(second_informaled$FINAL_RANK)/nrow(second_informaled)
+informaled$`3` <- sum(third_informaled$FINAL_RANK)/nrow(third_informaled)
+informaled$`4` <- sum(fourth_informaled$FINAL_RANK)/nrow(fourth_informaled)
+informaled$`5` <- sum(fifth_informaled$FINAL_RANK)/nrow(fifth_informaled)
+
+inform <- gather(informaled, ArrestNum, Count, `1`, `2`, `3`, `4`, `5`)
+
+informaled_trend <- ggplot(inform, aes(x=as.numeric(ArrestNum), y=Count, group=1)) +
+  geom_line(color = "black", size=0.1) +
+  geom_point(color = "#F2CA27", size = 2) +
+  scale_y_reverse() +
+  scale_x_continuous(breaks = seq(1, 5,1)) +
+  labs(x = "Offense Number", y = "Average Severity", 
+       title = "Trends in offense severity by number of informaled arrests")
+plot(informaled_trend)
+
+#How many people were put on probation and then violated probation within 12 months?
+#How many people were put on probation for their first crime and the violated probation as their second crime?
+first_probation <- balt_multiple_charge %>% 
+  filter(grepl("Probation|Supervision", DISPOSITION_TEXT)) %>%
+  filter(ADJ_DECISION_CODE == "S") %>% 
+  filter(arrestnumber == 1) %>%
+  filter(TotalArrests > 1)
+
+#Return YES if the second offense is a probation violation
+#Return NO if the second offense is not a probation violation
+#Currently there is an issue where if two different offenses have the same complaint date they will
+#be given the same arrest number (basically we need to find a way to break ties)
+second_violation <- function(id) {
+  second_offense <- balt_multiple_charge %>%
+    filter(REVACTOR_ID == id) %>% 
+    filter(arrestnumber == 2)
+  
+  if (second_offense$OFFENSE_CODE == "VIOP") {
+    return("YES")
+  } else {
+    return("NO")
+  }
+}
+
+violated_first <- first_probation %>% select(REVACTOR_ID)
+violated_first$SecondViolation <- mapply(FUN=second_violation, violated_first$REVACTOR_ID)
+
+gunviolation <- balt_multiple_charge %>% 
+  filter(arrestnumber > 1) %>%
+  filter(grepl("Handgun", OFFENSE_TEXT))
+
+gun_ids <- select(gunviolation, REVACTOR_ID)
+
+#Next Steps:
+#1) Need to get all of the other violations that happened before the violation for each id
+#2) Group all of those other offenses by offense text
+#3) Look at proportion of total offenses that led to handgun violation?
+#4) Look at # people who had a specific violation that led to handgun violation?
+
+
