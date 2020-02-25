@@ -66,11 +66,13 @@ top_djs <- left_join(top_djs,demographics, by=c("REVACTOR_ID","REVLEGALINCIDENT_
 #Filter for DJS data we want
 top_djs <- filter(top_djs, year(top_djs$COMPLAINT_DATE.x) > 2009)
 top_djs <- filter(top_djs, year(top_djs$COMPLAINT_DATE.x) < 2020)
+
+balt_djs <- filter(top_djs, top_djs$COUNTY == "Baltimore City")
 #---------------------------Completed DJS table------------------------------
 
-top_djs$year <- year(top_djs$COMPLAINT_DATE.x)
+balt_djs$year <- year(top_djs$COMPLAINT_DATE.x)
 
-first_arrest <- top_djs %>%
+first_arrest <- balt_djs %>%
   group_by(REVACTOR_ID) %>%
   arrange(COMPLAINT_DATE.x) %>%
   filter(row_number() == 1) %>%
@@ -87,10 +89,17 @@ ages <- first_arrest %>%
 ages <- ages %>% rename(total = count)
 ages <- na.omit(ages)
 
-ages$avg <- mapply(FUN=find_avg_arrests, ages$year, ages$AGE_COMPLAINT)
+balt_djs$arrestnum <- mapply(FUN = order, balt_djs$REVACTOR_ID, balt_djs$COMPLAINT_DATE.x)
+
+order <- function(arg1,arg2) {
+  balt_djs %>% filter(arg1 == REVACTOR_ID) %>%
+    filter(COMPLAINT_DATE.x < as.Date(arg2) & ARREST_DATE.x < as.Date(arg2)) %>%
+    nrow()+1
+}
 
 find_avg_arrests <- function(yearentered, age) {
-  year_ids <- top_djs %>% 
+  year_ids <-  balt_djs %>% 
+    filter(arrestnum == 1) %>%
     filter(age == AGE_COMPLAINT) %>%
     filter(yearentered == year) %>%
     select(REVACTOR_ID, COMPLAINT_DATE.x) 
@@ -102,8 +111,81 @@ find_avg_arrests <- function(yearentered, age) {
 }
 
 count_future_arrests <- function(id, date) {
-  top_djs %>% filter(id == REVACTOR_ID) %>%
+  balt_djs %>% filter(id == REVACTOR_ID) %>%
     filter(COMPLAINT_DATE.x > as.Date(date)) %>%
     nrow()
 }
+
+find_avg_severity <- function(yearentered, age) {
+  year_ids <-  balt_djs %>% 
+    filter(arrestnum == 1) %>%
+    filter(age == AGE_COMPLAINT) %>%
+    filter(yearentered == year) %>%
+    select(REVACTOR_ID, COMPLAINT_DATE.x)
+  
+  severity <- 0
+  severity <- severity + mapply(FUN=future_severity, id=year_ids$REVACTOR_ID, date=year_ids$COMPLAINT_DATE.x)
+  
+  return(sum(severity)/nrow(year_ids))
+}
+
+future_severity <- function(id, date) {
+  all_sev <- balt_djs %>% filter(id == REVACTOR_ID) %>%
+    filter(COMPLAINT_DATE.x >= as.Date(date))
+  
+  return(sum(all_sev$FINAL_RANK)/nrow((all_sev)))
+}
+
+#Calculates average total number of arrests expect for each age/year cohort
+ages$avg <- mapply(FUN=find_avg_arrests, ages$year, ages$AGE_COMPLAINT)
+
+ages <- ages %>% filter(AGE_COMPLAINT > 9)
+ages <- ages %>% filter(AGE_COMPLAINT < 18)
+
+ages <- ages %>%
+  mutate(yrsto18 = 18 - AGE_COMPLAINT,
+         yrstoend = 2020 - year,
+         avgperyear = ifelse(yrsto18 < yrstoend, avg / yrsto18, avg / yrstoend )
+         )
+#Calculates average severity of future arrests for each cohort (includes first arrest)
+ages$sev <- mapply(FUN=find_avg_severity, ages$year, ages$AGE_COMPLAINT)
+
+#For graphing purposes
+ages$charAge <- as.character(ages$AGE_COMPLAINT)
+
+#Graph average number of expected arrests per year for each age/year cohort
+agecrime <- ggplot(ages, aes(x=year, y=avgperyear, group=charAge, color=charAge)) +
+  geom_path() +
+  geom_point() +
+  scale_x_continuous(limits = c(2010, 2019), breaks=c(2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019)) +
+  ggtitle("Year of first arrest by average number of expected arrests per subsequent year") +
+  xlab("Year of first arrest") +
+  ylab("Average arrests per year expected until they turn 18 or before 2019")
+agecrime
+
+ageseverity <- ggplot(ages, aes(x=year, y=sev, group=charAge, color=charAge)) +
+  geom_path() +
+  geom_point() +
+  scale_x_continuous(limits = c(2010, 2019), breaks=c(2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019)) +
+  scale_y_reverse(limits=c(120,40), breaks=c(120, 110, 100, 90, 80, 70, 60, 50, 40)) +
+  ggtitle("Year of first arrest by severity of subsequent arrests (includes initial arrest)") +
+  xlab("Year of first arrest") +
+  ylab("Average severity of subsequent arrests")
+ageseverity
+
+#Other areas to look into: 
+#1) % felony charges for age/year cohorts
+  #maybe we want to just see for each group of kids in X year, how many of their charges were actually sustained
+#2) avg sustained/unsustained charges 
+
+
+
+#ALL DJS DATA --> Here for state-wide comparisons but not super necessary atm
+top_djs$arrestnum <- mapply(FUN = order, top_djs$REVACTOR_ID, top_djs$COMPLAINT_DATE.x)
+all_first_arrest <- top_djs %>%
+  group_by(REVACTOR_ID) %>%
+  arrange(COMPLAINT_DATE.x) %>%
+  filter(row_number() == 1) %>%
+  ungroup()
+
 
