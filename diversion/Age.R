@@ -91,12 +91,14 @@ ages <- na.omit(ages)
 
 balt_djs$arrestnum <- mapply(FUN = order, balt_djs$REVACTOR_ID, balt_djs$COMPLAINT_DATE.x)
 
+#Add an arrest number (sequence)
 order <- function(arg1,arg2) {
   balt_djs %>% filter(arg1 == REVACTOR_ID) %>%
     filter(COMPLAINT_DATE.x < as.Date(arg2) & ARREST_DATE.x < as.Date(arg2)) %>%
     nrow()+1
 }
 
+#Find the average number of expected arrests for a year/age cohort
 find_avg_arrests <- function(yearentered, age) {
   year_ids <-  balt_djs %>% 
     filter(arrestnum == 1) %>%
@@ -110,12 +112,14 @@ find_avg_arrests <- function(yearentered, age) {
   return(sum(crime_count)/nrow(year_ids))
 }
 
+#Count future arrests for an individual (exclude initial arrest)
 count_future_arrests <- function(id, date) {
   balt_djs %>% filter(id == REVACTOR_ID) %>%
     filter(COMPLAINT_DATE.x > as.Date(date)) %>%
     nrow()
 }
 
+#Find average crime severity for age/year cohort
 find_avg_severity <- function(yearentered, age) {
   year_ids <-  balt_djs %>% 
     filter(arrestnum == 1) %>%
@@ -129,6 +133,7 @@ find_avg_severity <- function(yearentered, age) {
   return(sum(severity)/nrow(year_ids))
 }
 
+#Find average severity for individual offender
 future_severity <- function(id, date) {
   all_sev <- balt_djs %>% filter(id == REVACTOR_ID) %>%
     filter(COMPLAINT_DATE.x >= as.Date(date))
@@ -163,6 +168,7 @@ agecrime <- ggplot(ages, aes(x=year, y=avgperyear, group=charAge, color=charAge)
   ylab("Average arrests per year expected until they turn 18 or before 2019")
 agecrime
 
+#Graph average future crime severity for age/year cohort
 ageseverity <- ggplot(ages, aes(x=year, y=sev, group=charAge, color=charAge)) +
   geom_path() +
   geom_point() +
@@ -177,7 +183,6 @@ ageseverity
 #1) % felony charges for age/year cohorts
   #maybe we want to just see for each group of kids in X year, how many of their charges were actually sustained
 #2) avg sustained/unsustained charges 
-
 
 
 #ALL DJS DATA --> Here for state-wide comparisons but not super necessary atm
