@@ -86,7 +86,7 @@ arrest_count <- num_arrests %>%
   summarize(count = n())
 
 #All MD data
-arrest_count_frequency <- ggplot(arrest_count, aes(x=COUNT, y=count)) +
+arrest_count_frequency <- ggplot(arrest_count, aes(x=TotalArrests, y=count)) +
   geom_bar(stat = "identity", color="black", fill="#F2CA27") + 
   labs(title="Frequency of multiple arrests") +
   xlab("# Arrests") + 
@@ -100,9 +100,8 @@ multiple_charge <- multiple_charge %>%
   arrange(OFFENSE_DATE)
 
 #Assign an arrest number (sequence) to each arrest for each person
-#Takes a while to run (~15min)
 order <- function(arg1,arg2) {
-  balt_multiple_charge %>% filter(arg1 == REVACTOR_ID) %>%
+  multiple_charge %>% filter(arg1 == REVACTOR_ID) %>%
     filter(COMPLAINT_DATE.x < as.Date(arg2)) %>%
     nrow()+1
 }
@@ -134,21 +133,22 @@ balt_frequency <- ggplot(balt_count, aes(x=TotalArrests, y=count)) +
 plot(balt_frequency)
 
 #Super round about way to do this but I needed this to create the severity table
-crime_severity$REVACTOR_ID <- NULL
-crime_severity <- crime_severity %>% group_by(COUNTY) %>% summarize(count = n())
+crime_severity <- top_djs %>% group_by(COUNTY) %>% summarize(count = n())
 
 #Crime severity as number of arrests increases
 severity <- crime_severity %>% select(COUNTY)
-first_crime <- balt_multiple_charge %>% filter(arrestnumber == 1)
-second_crimes <- balt_multiple_charge %>% filter(arrestnumber == 2)
-third_crimes <- balt_multiple_charge %>% filter(arrestnumber == 3)
-fourth_crime <- balt_multiple_charge %>% filter(arrestnumber == 4)
-fifth_crime <- balt_multiple_charge %>% filter(arrestnumber == 5)
-sixth_crime <- balt_multiple_charge %>% filter(arrestnumber == 6)
-seventh_crime <- balt_multiple_charge %>% filter(arrestnumber == 7)
-eigth_crime <- balt_multiple_charge %>% filter(arrestnumber == 8)
-ninth_crime <- balt_multiple_charge %>% filter(arrestnumber == 9)
-tenth_crime <- balt_multiple_charge %>% filter(arrestnumber == 10)
+severity$COUNTY <- "All MD"
+
+first_crime <- top_djs %>% filter(arrestnum == 1)
+second_crimes <- top_djs %>% filter(arrestnum == 2)
+third_crimes <- top_djs %>% filter(arrestnum == 3)
+fourth_crime <- top_djs %>% filter(arrestnum == 4)
+fifth_crime <- top_djs %>% filter(arrestnum == 5)
+sixth_crime <- top_djs %>% filter(arrestnum == 6)
+seventh_crime <- top_djs %>% filter(arrestnum == 7)
+eigth_crime <- top_djs %>% filter(arrestnum == 8)
+ninth_crime <- top_djs %>% filter(arrestnum == 9)
+tenth_crime <- top_djs %>% filter(arrestnum == 10)
 severity$`1` <- sum(first_crime$FINAL_RANK)/nrow(first_crime)
 severity$`2` <- sum(second_crimes$FINAL_RANK)/nrow(second_crimes)
 severity$`3` <- sum(third_crimes$FINAL_RANK)/nrow(third_crimes)
@@ -159,6 +159,7 @@ severity$`7` <- sum(seventh_crime$FINAL_RANK)/nrow(seventh_crime)
 severity$`8` <- sum(eigth_crime$FINAL_RANK)/nrow(eigth_crime)
 severity$`9` <- sum(ninth_crime$FINAL_RANK)/nrow(ninth_crime)
 severity$`10` <- sum(tenth_crime$FINAL_RANK)/nrow(tenth_crime)
+severity <- severity %>% filter(row_number() == 1)
 
 sev <- gather(severity, OffenseNum, Count,`1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`)
 
@@ -171,7 +172,6 @@ severity_trend <- ggplot(sev, aes(x=as.numeric(OffenseNum), y=Count, group=1)) +
   labs(x = "Offense Number", y = "Average Severity", 
        title = "Trends in offense severity by number of arrests")
 plot(severity_trend)
-
 
 #Crime severity of informaled charges
 balt_informal <- balt_multiple_charge %>% filter(DETNDECIDE_DEC == "Informaled")

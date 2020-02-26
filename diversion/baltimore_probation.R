@@ -38,7 +38,6 @@ all_disposition <- rbind(disposition, no_disposition)
 all_disposition <- filter(all_disposition, as.Date(all_disposition$COMPLAINT_DATE) < as.Date(all_disposition$DISPOSITION_DATE))
 
 demographics1 <- read_excel("~/Documents/OPI/data/UnlockedDJSData/Demographics_2002_2019.xlsx")
-demographics1 <- filter(demographics1, year(demographics1$COMPLAINT_DATE) > 2009)
 demographics2 <- read_excel("~/Documents/OPI/data/JulyDecember2019Demographics.xlsx")
 demographics <- rbind(demographics1, demographics2)
 
@@ -287,3 +286,39 @@ md_commit_table <- baltimore_committments %>% rename(BaltimoreCount = count) %>%
   mutate(ChanceNoBaltimore = no_baltimore_commits$MDCommits) %>%
   arrange(-BaltimoreCount)
 View(md_commit_table)
+
+
+probationcommit <- merge(md_commit_table, new_md, by="OFFENSE_TEXT")
+probationcommit <- rename(probationcommit, CommitCount = BaltimoreCount.x, ProbationCount = BaltimoreCount.y)
+
+probationcommit <- probationcommit %>% filter(ProbationCount > 30)
+
+pcgraph <- ggplot(probationcommit, aes(y=reorder(OFFENSE_TEXT, ChanceBaltimoreProbation))) +
+  geom_line(aes(x=BaltimoreCommitmentChance, colour="Commitment"), group=1) +
+  geom_line(aes(x=ChanceBaltimoreProbation, colour="Probation"), group=1) +
+  #theme(axis.text.y = element_text(size=5)) +
+  labs(y="Offense", x="Probation/Commitment Chance", colour="Key")
+pcgraph
+
+top_probation <- new_md %>% filter(BaltimoreCount > 30)
+
+bmoreprobgraph <- ggplot(probationcommit, aes(y=reorder(OFFENSE_TEXT, ChanceBaltimoreProbation))) +
+  geom_line(aes(x=ChanceBaltimoreProbation, colour="Baltimore"), group=1) +
+  geom_line(aes(x=ChanceMDProbation, colour="All MD"), group=1) +
+  geom_line(aes(x=ChanceNoBaltimore.y, colour="MD excluding Baltimore"), group=1) +
+  labs(y="Offense", x="Probation Chance", colour="Key")
+bmoreprobgraph
+  
+md_commit_table <- filter(md_commit_table, OFFENSE_TEXT != "Deadly Weapon Misdemeanor - Openly with Intent to Injure - Dangerous Weapon, Mace/Chemical Device - Wear or Carry")
+top_md_commit <- md_commit_table %>% filter(BaltimoreCount > 30)
+
+bmorecommitgraph <- ggplot(probationcommit, aes(y=reorder(OFFENSE_TEXT, ChanceBaltimoreProbation))) +
+  geom_line(aes(x=BaltimoreCommitmentChance, colour="Baltimore"), group=1) +
+  geom_line(aes(x=ChanceMDCommit, colour="All MD"), group=1) +
+  geom_line(aes(x=ChanceNoBaltimore.x, colour="MD excluding Baltimore"), group=1) +
+  labs(y="Offense", x="Commitment Chance", colour="Key")
+bmorecommitgraph
+  
+  
+  
+  
