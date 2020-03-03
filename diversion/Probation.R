@@ -54,9 +54,6 @@ top_djs <- all_djs %>%
 #might be some duplicates with the additional demographic data that was added
 top_djs <- left_join(top_djs,demographics, by=c("REVACTOR_ID","REVLEGALINCIDENT_KEY")) 
 
-
-
-
 #Filter for DJS data we want
 top_djs <- filter(top_djs, year(top_djs$COMPLAINT_DATE.x) > 2009)
 top_djs <- filter(top_djs, year(top_djs$COMPLAINT_DATE.x) < 2020)
