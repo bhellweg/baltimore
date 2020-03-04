@@ -4,6 +4,7 @@ library(formattable)
 library(lubridate)
 library(leaflet)
 library(scales)
+library(janitor)
 
 #Loading Relevant Files
 
@@ -15,6 +16,7 @@ arrests$arresttime <- format(arrests$arresttime, "%H%:%M%:%S")
 arrests$arrestdate <- arrests$arrestdate %>% as.Date("%m/%d/%Y", tz="EST")
 arrests$month <- floor_date(arrests$arrestdate, unit = "months")
 arrests$year <- floor_date(arrests$arrestdate, unit = "years")
+yarrests$hour <- substr(yarrests$arresttime, 1,2)
 
 #Creating Relevant Tables
 
@@ -22,7 +24,6 @@ yarrests <- arrests %>% filter(age<18)
 juvarrests <- arrests %>% filter(source == "JUV ARREST")
 cbifarrests <- arrests %>% filter(source == "CBIF ARREST")
 asadults <- arrests %>% filter(age<18, source == "CBIF ARREST")
-datetable <- as.data.frame(seq.Date(as.Date("2010/01/01"),as.Date("2020/01/01"),"days"))
 
 #Checking the percent null for each table
 
@@ -109,8 +110,6 @@ juvdplot <- ggplot(juvarrests_daily, aes(x = juvarrests_daily$month, y = n)) +
 juvdplot
 
 #Creating a Time Heat Map
-
-yarrests$hour <- substr(yarrests$arresttime, 1,2)
 
 arresttime <- yarrests %>%
   group_by(dayofweek, hour) %>%
@@ -277,6 +276,15 @@ lyarrests <- yarrests %>%
 
 View(lyarrests)
 
+# School Arrests
+scarrests <- yarrests %>% filter(!is.na(school)) %>%
+  count(year,school) %>% arrange(desc(n)) %>% arrange(year) %>%
+  pivot_wider(names_from = year,values_from = n) %>%
+  adorn_totals() %>% mutate_if(is.integer,~replace(.is.na(.),0)) %>%
+  mutate(Total = select(.,2:11) %>% rowSums()) %>% formattable()
+
+scarrests
+
 #Summary of Plots:
 yarmap #Cluster map of arrests, 2010 to 2020
 ydplot #Daily graph of youth arrests
@@ -287,3 +295,4 @@ cwplot #Tile Plot of the heat map of time and week arrests by charge
 ctaplot #Tile Plot of Youth Arrests per month
 juvaplot #Tile plot of Juvenile Arrests per month
 actaplot #Tile Plot of Charges as Adults per month
+scarrests #Table of arrests at school locations
