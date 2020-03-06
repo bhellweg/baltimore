@@ -100,21 +100,30 @@ djs$arrestnum <- mapply(FUN = order, djs$REVACTOR_ID, djs$COMPLAINT_DATE.x)
 clean_djs <- djs %>% filter(!(OFFENSE_CODE == "VIOP" && arrestnum == 1))
 
 
-recidivism <- function(filter, criteria) {
-  if (filter == "violation") {
+recidivism <- function(category, criteria) {
+  if (category == "violation") {
     filtered_table <- clean_djs %>%
       filter(grepl(criteria, OFFENSE_TEXT))
-  } else if (filter == "age") {
+    viol <- criteria
+    graphname <- paste("Violation:", viol, "- Probability of reoffense based on interaction outcome")
+  } else if (category == "age") {
     filtered_table <- clean_djs %>%
       filter(AGE_COMPLAINT == criteria)
-  } else if (filter == "county") {
+    a <- criteria
+    graphname <- paste("Age:", a, "- Probability of reoffense based on interaction outcome")
+  } else if (category == "county") {
     filtered_table <- clean_djs %>%
       filter(COUNTY == criteria)
-  } else if (filter == "charge") {
+    c <- criteria
+    graphname <- paste("County:", c, "- Probability of reoffense based on interaction outcome")
+  } else if (category == "charge") {
     filtered_table <- clean_djs %>%
       filter(OFFENSE_TYPE == criteria)
+    ch <- criteria
+    graphname <- paste("Charge:", ch, "- Probability of reoffense based on interaction outcome")
   } else {
     filtered_table <- clean_djs
+    graphname <- paste("All criteria - Probability of reoffense based on interaction outcome")
   }
   
   #Resolved at Intake
@@ -261,11 +270,11 @@ recidivism <- function(filter, criteria) {
                           "Commitment" = percent_commit_reoffense)
   reoffense_table <- gather(reoffense, "Outcome", "Probability")
   
-  reoffense_graph <- ggplot(reoffense_table, aes(x=reorder(Outcome,Probability))) +
-    geom_line(aes(y=as.numeric(reoffense_table$Probability)), group = 1) +
-    geom_point(aes(y=as.numeric(reoffense_table$Probability))) +
-    scale_x_discrete() +
-    labs(x="Outcome", y="Probability of reoffense", title="Probability of reoffense based on interaction outcome")
+  reoffense_graph <- ggplot(reoffense_table, aes(x=reoffense_table$Outcome, y=reoffense_table$Probability)) +
+    geom_bar(color="black", fill="lightblue", stat = "identity") + 
+    scale_x_discrete(limits=c("ResolvedAtIntake", "Informaled", "Unsustained", 
+                              "Sustained", "Probation", "Commitment"), na.translate = TRUE, na.value = 0) +
+    labs(x="Outcome", y="Probability of reoffense", title=graphname)
   reoffense_graph
 }
 
@@ -276,13 +285,5 @@ recidivism <- function(filter, criteria) {
 #charge: Felony or Misdemeanor (must be capitalized)
 #county: currently only deals with Baltimore City but could be expanded to other counties
 
-recidivism("all", "all")
-
-
-
-
-
-
-
-
+recidivism("violation", "Murder 1st Degree")
 
