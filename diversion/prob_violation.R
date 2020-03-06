@@ -133,19 +133,14 @@ recidivism <- function(category, criteria) {
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_crai <- crai %>%
+    mutate(futurecrime = ifelse(arrestnum < totalarrests, 1, 0)) %>%
     filter(firstcrime == 1) %>%
-    select(REVACTOR_ID, COMPLAINT_DATE.x) %>%
+    select(REVACTOR_ID, COMPLAINT_DATE.x, futurecrime) %>%
     rename(firstdate = COMPLAINT_DATE.x)
   
-  crai_djs <- left_join(clean_djs, first_crai)
-  
-  crai_reoffend <- crai_djs %>% mutate(reoffense = ifelse(COMPLAINT_DATE.x > firstdate, 1, 0))
-  crai_reoffenders <- crai_reoffend %>%
-    filter(reoffense == 1) %>%
-    group_by(REVACTOR_ID) %>%
-    summarise(count = n())
-  
-  percent_crai_reoffense <- nrow(crai_reoffenders)/nrow(first_crai)
+  crai_expected <- mean(first_crai$futurecrime)
+  crai_variance <- (crai_expected*(1-crai_expected))/nrow(first_crai)
+  crai_stddeviation <- sqrt(crai_variance)
   #------------------------end resolved at intake-----------------
   
   #Informaled
@@ -155,19 +150,15 @@ recidivism <- function(category, criteria) {
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_informaled <- informaled %>%
+    mutate(futurecrime = ifelse(arrestnum < totalarrests, 1, 0)) %>%
     filter(firstcrime == 1) %>%
-    select(REVACTOR_ID, COMPLAINT_DATE.x) %>%
+    select(REVACTOR_ID, COMPLAINT_DATE.x, futurecrime) %>%
     rename(firstdate = COMPLAINT_DATE.x)
   
-  informaled_djs <- left_join(clean_djs, first_informaled)
+  informal_expected <- mean(first_informaled$futurecrime)
+  informal_variance <- (informal_expected*(1-informal_expected))/nrow(first_informaled)
+  informal_stddeviation <- sqrt(informal_variance)
   
-  informaled_reoffend <- informaled_djs %>% mutate(reoffense = ifelse(COMPLAINT_DATE.x > firstdate, 1, 0))
-  informaled_reoffenders <- informaled_reoffend %>%
-    filter(reoffense == 1) %>%
-    group_by(REVACTOR_ID) %>%
-    summarise(count = n())
-  
-  percent_informaled_reoffense <- nrow(informaled_reoffenders)/nrow(first_informaled)
   #------------------end informaled-------------------------------
   
   #Sustained
@@ -178,19 +169,14 @@ recidivism <- function(category, criteria) {
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_sus <- sus %>%
+    mutate(futurecrime = ifelse(arrestnum < totalarrests, 1, 0)) %>%
     filter(firstcrime == 1) %>%
-    select(REVACTOR_ID, COMPLAINT_DATE.x) %>%
+    select(REVACTOR_ID, COMPLAINT_DATE.x, futurecrime) %>%
     rename(firstdate = COMPLAINT_DATE.x)
   
-  sus_djs <- left_join(clean_djs, first_sus)
-  
-  sus_reoffend <- sus_djs %>% mutate(reoffense = ifelse(COMPLAINT_DATE.x > firstdate, 1, 0))
-  sus_reoffenders <- sus_reoffend %>%
-    filter(reoffense == 1) %>%
-    group_by(REVACTOR_ID) %>%
-    summarise(count = n())
-  
-  percent_sustained_reoffense <- nrow(sus_reoffenders)/nrow(first_sus)
+  sus_expected <- mean(first_sus$futurecrime)
+  sus_variance <- (sus_expected*(1-sus_expected))/nrow(first_sus)
+  sus_stddeviation <- sqrt(sus_variance)
   #---------------------end sustained------------------------
   
   #Unsustained
@@ -201,19 +187,14 @@ recidivism <- function(category, criteria) {
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_unsus <- unsus %>%
+    mutate(futurecrime = ifelse(arrestnum < totalarrests, 1, 0)) %>%
     filter(firstcrime == 1) %>%
-    select(REVACTOR_ID, COMPLAINT_DATE.x) %>%
+    select(REVACTOR_ID, COMPLAINT_DATE.x, futurecrime) %>%
     rename(firstdate = COMPLAINT_DATE.x)
-  
-  unsus_djs <- left_join(clean_djs, first_unsus)
-  
-  unsus_reoffend <- unsus_djs %>% mutate(reoffense = ifelse(COMPLAINT_DATE.x > firstdate, 1, 0))
-  unsus_reoffenders <- unsus_reoffend %>%
-    filter(reoffense == 1) %>%
-    group_by(REVACTOR_ID) %>%
-    summarise(count = n())
-  
-  percent_unsustained_reoffense <- nrow(unsus_reoffenders)/nrow(first_unsus)
+    
+  unsus_expected <- mean(first_unsus$futurecrime)
+  unsus_variance <- (unsus_expected*(1-unsus_expected))/nrow(first_unsus)
+  unsus_stddeviation <- sqrt(unsus_variance)
   #--------------end unsustained----------------------
   
   #Probation
@@ -224,19 +205,14 @@ recidivism <- function(category, criteria) {
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_prob <- prob %>%
+    mutate(futurecrime = ifelse(arrestnum < totalarrests, 1, 0)) %>%
     filter(firstcrime == 1) %>%
-    select(REVACTOR_ID, COMPLAINT_DATE.x) %>%
+    select(REVACTOR_ID, COMPLAINT_DATE.x, futurecrime) %>%
     rename(firstdate = COMPLAINT_DATE.x)
   
-  prob_djs <- left_join(clean_djs, first_prob)
-  
-  prob_reoffend <- prob_djs %>% mutate(reoffense = ifelse(COMPLAINT_DATE.x > firstdate, 1, 0))
-  prob_reoffenders <- prob_reoffend %>%
-    filter(reoffense == 1) %>%
-    group_by(REVACTOR_ID) %>%
-    summarise(count = n())
-  
-  percent_probation_reoffense <- nrow(prob_reoffenders)/nrow(first_prob)
+  prob_expected <- mean(first_prob$futurecrime)
+  prob_variance <- (prob_expected*(1-prob_expected))/nrow(first_prob)
+  prob_stddeviation <- sqrt(prob_variance)
   #-------------------end probation---------------------------
   
   #Committed
@@ -247,31 +223,36 @@ recidivism <- function(category, criteria) {
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_commit <- commit %>%
+    mutate(futurecrime = ifelse(arrestnum < totalarrests, 1, 0)) %>%
     filter(firstcrime == 1) %>%
-    select(REVACTOR_ID, COMPLAINT_DATE.x) %>%
+    select(REVACTOR_ID, COMPLAINT_DATE.x,futurecrime) %>%
     rename(firstdate = COMPLAINT_DATE.x)
   
-  commit_djs <- left_join(clean_djs, first_commit)
-  
-  commit_reoffend <- commit_djs %>% mutate(reoffense = ifelse(COMPLAINT_DATE.x > firstdate, 1, 0))
-  commit_reoffenders <- commit_reoffend %>%
-    filter(reoffense == 1) %>%
-    group_by(REVACTOR_ID) %>%
-    summarise(count = n())
-  
-  percent_commit_reoffense <- nrow(commit_reoffenders)/nrow(first_commit)
+  commit_expected <- mean(first_commit$futurecrime)
+  commit_variance <- (commit_expected*(1-commit_expected))/nrow(first_commit)
+  commit_stddeviation <- sqrt(commit_variance)
+
   #----------end commit--------------------
   
-  reoffense <- data.frame("ResolvedAtIntake"=percent_crai_reoffense, 
-                          "Informaled" = percent_informaled_reoffense, 
-                          "Sustained" = percent_sustained_reoffense,
-                          "Unsustained" = percent_unsustained_reoffense,
-                          "Probation" = percent_probation_reoffense,
-                          "Commitment" = percent_commit_reoffense)
+  reoffense <- data.frame("ResolvedAtIntake" = crai_expected, 
+                          "Informaled" = informal_expected, 
+                          "Sustained" = sus_expected,
+                          "Unsustained" = unsus_expected,
+                          "Probation" = prob_expected,
+                          "Commitment" = commit_expected)
   reoffense_table <- gather(reoffense, "Outcome", "Probability")
+  
+  reoffense_table <- reoffense_table %>%
+    mutate(stddev = c(crai_stddeviation, informal_stddeviation, sus_stddeviation, 
+                      unsus_stddeviation, prob_stddeviation, commit_stddeviation))
   
   reoffense_graph <- ggplot(reoffense_table, aes(x=reoffense_table$Outcome, y=reoffense_table$Probability)) +
     geom_bar(color="black", fill="lightblue", stat = "identity") + 
+    geom_errorbar(aes(x=reoffense_table$Outcome, 
+                 ymin=reoffense_table$Probability-reoffense_table$stddev, 
+                  ymax=reoffense_table$Probability+reoffense_table$stddev,
+                  width=0.4, alpha=0.9)) +
+    scale_y_continuous(limits=c(0, 1)) +
     scale_x_discrete(limits=c("ResolvedAtIntake", "Informaled", "Unsustained", 
                               "Sustained", "Probation", "Commitment"), na.translate = TRUE, na.value = 0) +
     labs(x="Outcome", y="Probability of reoffense", title=graphname)
@@ -284,6 +265,5 @@ recidivism <- function(category, criteria) {
 #age: 10-17 
 #charge: Felony or Misdemeanor (must be capitalized)
 #county: currently only deals with Baltimore City but could be expanded to other counties
-
-recidivism("violation", "Murder 1st Degree")
+recidivism("age", 16)
 
