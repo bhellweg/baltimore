@@ -121,6 +121,35 @@ recidivism <- function(category, criteria) {
       filter(OFFENSE_TYPE == criteria)
     ch <- criteria
     graphname <- paste("Charge:", ch, "- Probability of reoffense based on interaction outcome")
+  } else if (category == "group") {
+    if (criteria == "car") {
+      filtered_table <- clean_djs %>%
+        filter(grepl("Carjack|Motor", OFFENSE_TEXT))
+      graphname <- paste("Group: Car Crimes - Probability of reoffense based on interaction outcome")
+    } else if (criteria == "handgun") {
+      filtered_table <- clean_djs %>%
+        filter(grepl("Handgun|HGV", OFFENSE_TEXT))
+      graphname <- paste("Group: Handgun Crimes - Probability of reoffense based on interaction outcome")
+    } else if (criteria == "robbery") {
+      filtered_table <- clean_djs %>% 
+        filter(grepl("Robbery", OFFENSE_TEXT))
+      graphname <- paste("Group: Robbery - Probability of reoffense based on interaction outcome")
+    } else if (criteria == "police") {
+      filtered_table <- clean_djs %>%
+        filter(grepl("Police", OFFENSE_TEXT))
+      graphname <- paste("Group: Police Interaction - Probability of reoffense based on interaction outcome")
+    } else if (criteria == "burglary") {
+      filtered_table <- clean_djs %>% 
+        filter(grepl("Burglary", OFFENSE_TEXT))
+      graphname <- paste("Group: Burglary - Probability of reoffense based on interaction outcome")
+    } else if (criteria == "cds") {
+      filtered_table <- clean_djs %>%
+        filter(grepl("CDS|Paraphernalia", OFFENSE_TEXT))
+      graphname <- paste("Group: Drug Charges - Probability of reoffense based on interaction outcome")
+    } else {
+      filtered_table <- clean_djs
+      graphname <- paste("No group specified - Probability of reoffense based on interaction outcome")
+    }
   } else {
     filtered_table <- clean_djs
     graphname <- paste("All criteria - Probability of reoffense based on interaction outcome")
@@ -130,6 +159,7 @@ recidivism <- function(category, criteria) {
   crai <- filtered_table %>%
     filter(DETNDECIDE_DEC == "Resolved/No Jurisdiction") %>%
     group_by(REVACTOR_ID) %>%
+    arrange(COMPLAINT_DATE.x) %>%
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_crai <- crai %>%
@@ -147,6 +177,7 @@ recidivism <- function(category, criteria) {
   informaled <- filtered_table %>%
     filter(DETNDECIDE_DEC == "Informaled") %>%
     group_by(REVACTOR_ID) %>%
+    arrange(COMPLAINT_DATE.x) %>%
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_informaled <- informaled %>%
@@ -202,6 +233,7 @@ recidivism <- function(category, criteria) {
     filter(ADJ_DECISION_CODE == "S") %>%
     filter(grepl("Probation|Supervision", DISPOSITION_TEXT)) %>%
     group_by(REVACTOR_ID) %>%
+    arrange(COMPLAINT_DATE.x) %>%
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_prob <- prob %>%
@@ -220,6 +252,7 @@ recidivism <- function(category, criteria) {
     filter(ADJ_DECISION_CODE == "S") %>%
     filter(grepl("Commit", DISPOSITION_TEXT)) %>%
     group_by(REVACTOR_ID) %>%
+    arrange(COMPLAINT_DATE.x) %>%
     mutate(firstcrime = ifelse(row_number() == 1, 1, 0))
   
   first_commit <- commit %>%
@@ -251,7 +284,7 @@ recidivism <- function(category, criteria) {
     geom_errorbar(aes(x=reoffense_table$Outcome, 
                  ymin=reoffense_table$Probability-reoffense_table$stddev, 
                   ymax=reoffense_table$Probability+reoffense_table$stddev,
-                  width=0.4, alpha=0.9)) +
+                  width=0.4)) +
     scale_y_continuous(limits=c(0, 1)) +
     scale_x_discrete(limits=c("ResolvedAtIntake", "Informaled", "Unsustained", 
                               "Sustained", "Probation", "Commitment"), na.translate = TRUE, na.value = 0) +
@@ -265,5 +298,65 @@ recidivism <- function(category, criteria) {
 #age: 10-17 
 #charge: Felony or Misdemeanor (must be capitalized)
 #county: currently only deals with Baltimore City but could be expanded to other counties
-recidivism("age", 16)
+#group: handgun, car, assault, deadly weapon, robbery, burglary
+recidivism("age", 10)
+
+
+offense_type <- top_djs %>%
+  group_by(OFFENSE_TYPE) %>%
+  summarize(count = n())
+
+assault <- clean_djs %>%
+  filter(grepl("Assault", OFFENSE_TEXT)) %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count = n())
+
+offense_text <- top_djs %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count = n())
+
+police <- clean_djs %>%
+  filter(grepl("Police", OFFENSE_TEXT)) %>%
+  select(OFFENSE_TEXT, OFFENSE_TYPE) %>%
+  group_by(OFFENSE_TEXT, OFFENSE_TYPE) %>%
+  summarize(count = n())
+
+robbery <- clean_djs %>%
+  filter(grepl("Robbery", OFFENSE_TEXT)) %>%
+  select(OFFENSE_TEXT, OFFENSE_TYPE) %>%
+  group_by(OFFENSE_TEXT, OFFENSE_TYPE) %>%
+  summarize(count = n())
+
+burglary <- clean_djs %>%
+  filter(grepl("Burglary", OFFENSE_TEXT)) %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count = n())
+
+cds <- clean_djs %>% 
+  filter(grepl("CDS|Paraphernalia", OFFENSE_TEXT)) %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count = n())
+
+theft <- clean_djs %>%
+  filter(grepl("Theft", OFFENSE_TEXT)) %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count= n())
+
+cars <- clean_djs %>%
+  filter(grepl("Carjack|Motor", OFFENSE_TEXT)) %>%
+  select(OFFENSE_TEXT, OFFENSE_TYPE) %>%
+  group_by(OFFENSE_TEXT, OFFENSE_TYPE) %>%
+  summarize(count = n())
+
+guncrimes <- clean_djs %>%
+  filter(grepl("Handgun|HGV", OFFENSE_TEXT)) %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count = n())
+
+civil_violations <- clean_djs %>%
+  filter(OFFENSE_TYPE == "Civil Violation") %>%
+  group_by(OFFENSE_TEXT) %>%
+  summarize(count = n())
+
+
 
