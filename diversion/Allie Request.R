@@ -15,10 +15,8 @@ library(scales)
 library(janitor)
 library(anchors)
 library(ggalluvial)
-library(alluvial)
 
 #Loading Relevant Files for BPD Arrests
-census2010 <- read_excel("C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Neighborhood 2010 Census Data.xlsx")
 crime <- read_excel("C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Part One Crime 2010 to 2020.xlsx")
 adultarrests <- read_excel("C:/Users/brendan.hellweg/Desktop/Youth Arrests Analysis/Data/Adult Arrests 2012 to 2020.xlsx")
 
@@ -147,7 +145,7 @@ allyouth <- top_djs %>%
   filter(AGE_COMPLAINT < 18) %>%
   filter(AGE_COMPLAINT > 7) %>%
   filter(COMPLAINT_DATE > "2010-1-1") %>%
-  filter(Order == 1) %>%
+ # filter(Order == 1) %>%
   group_by(Age = factor(AGE_COMPLAINT),
            Offense = OFFENSE_TEXT,
            Severity = FINAL_RANK,
@@ -219,7 +217,8 @@ sankey <- top_djs %>%
            Sustained = factor(guilty),
            Outcome = DISP_CATEGORY) %>%
   summarise(Frequency = n()) %>% 
-  filter(Frequency > 1) %>% 
+  filter(Frequency > 0) %>% 
+# filter(Offense == "Misdemeanor") %>%
   replace_na(list(Outcome = "Nothing")) %>%
   ggplot(aes(y = Frequency, 
              #axis1 = Age,
@@ -246,7 +245,6 @@ sankey <- top_djs %>%
           subtitle = "Data from 2018 to 2020 for Baltimore City Arrests, Filtered to Outcome Paths with More than 10 Occurrances")
 
 sankey
-
 
 #	Adding layers to time gradient chart to overlay other items like 
 #  where/when violent crime is happening
