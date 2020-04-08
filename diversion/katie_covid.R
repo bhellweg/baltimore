@@ -102,8 +102,10 @@ dow_format <- c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","S
 
 day_of_week <- calls %>%
   filter(Description == "BURGLARY"| Description== "SILENT ALARM") %>%
-  filter(`Call Date` < as.Date('2020-03-16')) %>%
-  group_by(Neighborhood, `Day of Week`, hour = hour(`Call Time`)) %>%
+  group_by(Neighborhood, `Day of Week`, 
+           Date = ifelse(`Call Date` > as.Date('2020-3-16'),
+                         "After 3/16/2020",
+                         "Before 3/16/2020")) %>%
   summarize(count = n()) %>%
   mutate(`Day Type` = ifelse(`Day of Week` == 'Monday' |
                                `Day of Week` == 'Tuesday' |
@@ -113,9 +115,12 @@ day_of_week <- calls %>%
 
 neighborhood_freq <- day_of_week %>%
   filter(Neighborhood %in% crime_increase$Neighborhood) %>%
-  group_by(Neighborhood, `Day Type`) %>%
+  group_by(Neighborhood, `Day Type`, Date) %>%
   summarize(count = n()) %>%
-  mutate(avg = ifelse(`Day Type` == "Weekday", count/5, count/2)) %>%
+  mutate(avg = case_when(`Day Type` == "Weekday" & Date == "Before 3/16/2020" ~ count/30,
+                         `Day Type` == "Weekday" & Date == "After 3/16/2020" ~ count/13,
+                         `Day Type` == "Weekend" & Date == "Before 3/16/2020" ~ count/12,
+                         `Day Type` == "Weekend" & Date == "After 3/16/2020" ~ count/5)) %>%
   left_join(crime_increase)
 
 neighborhood_freq$`Pre SIP Calls` <- NULL
@@ -130,7 +135,9 @@ twplot <- neighborhood_freq %>%
              x = `Day Type`)) +
   geom_tile(aes(fill = avg), na.rm = FALSE) +  
   scale_fill_gradient(low = "white", 
-                      high = "purple") +
+                      high = "purple",
+                      na.value = "grey50",
+                      guide="colorbar") +
   theme(axis.text.x = element_text(angle = 0, 
                                    vjust = 0.6), 
         legend.title = element_blank(), 
@@ -139,11 +146,12 @@ twplot <- neighborhood_freq %>%
         legend.key.width=unit(2, "cm"), 
         legend.key.height=unit(0.25, "cm")) +
   labs(y = "Hour of Arrest", x = "Day of Week", 
-       title = "Average Number of Burglaries and Silent Alarms before 3/16/2020") +
+       title = "Average Number of Burglaries/Silent Alarm Calls") +
   scale_x_discrete(expand = c(0,0) , 
                    position = "top") + 
-  geom_text(aes(label = avg), 
-            size = 3)
+  geom_text(aes(label = round(avg, digits=3)), 
+            size = 3) +
+  facet_wrap(~ Date)
 twplot
 
 
