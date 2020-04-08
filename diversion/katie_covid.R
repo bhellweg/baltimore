@@ -102,24 +102,35 @@ dow_format <- c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","S
 
 day_of_week <- calls %>%
   filter(Description == "BURGLARY"| Description== "SILENT ALARM") %>%
+  filter(`Call Date` < as.Date('2020-03-16')) %>%
   group_by(Neighborhood, `Day of Week`, hour = hour(`Call Time`)) %>%
-  summarize(count = n())
+  summarize(count = n()) %>%
+  mutate(`Day Type` = ifelse(`Day of Week` == 'Monday' |
+                               `Day of Week` == 'Tuesday' |
+                               `Day of Week` == 'Wednesday' |
+                               `Day of Week` == 'Thursday' |
+                               `Day of Week` == 'Sunday', "Weekday", "Weekend"))
 
-view(calls %>% filter(Neighborhood == "Remington") %>%
-       filter(Description == "BURGLARY"| Description== "SILENT ALARM"))
+neighborhood_freq <- day_of_week %>%
+  filter(Neighborhood %in% crime_increase$Neighborhood) %>%
+  group_by(Neighborhood, `Day Type`) %>%
+  summarize(count = n()) %>%
+  mutate(avg = ifelse(`Day Type` == "Weekday", count/5, count/2)) %>%
+  left_join(crime_increase)
 
-twplot <- day_of_week %>% 
-  filter(Neighborhood == "Remington") %>%
-  #calls %>%
-  #filter(Description == 'BURGLARY' | Description == 'SILENT ALARM') %>% 
-  #filter(Neighborhood == 'Remington') %>% 
-  #filter(as.Date(`Call Date`) > as.Date('2020-03-16')) %>%
-  #mutate(`DayofWeek` = factor(`Day of Week`, 
-  #                             level = dow_format)) %>% 
-  #mutate(count = count(`Day of Week`, hour(`Call Time`))) %>%
-  ggplot(aes(y = hour, 
-             x = `Day of Week`)) +
-  geom_tile() +
+neighborhood_freq$`Pre SIP Calls` <- NULL
+neighborhood_freq$`Post SIP Calls` <- NULL
+neighborhood_freq$preavgcallsperday <- NULL
+neighborhood_freq$postavgcallsperday <- NULL
+
+
+twplot <- neighborhood_freq %>% 
+  filter(percentchange > 25) %>%
+  ggplot(aes(y = Neighborhood, 
+             x = `Day Type`)) +
+  geom_tile(aes(fill = avg), na.rm = FALSE) +  
+  scale_fill_gradient(low = "white", 
+                      high = "purple") +
   theme(axis.text.x = element_text(angle = 0, 
                                    vjust = 0.6), 
         legend.title = element_blank(), 
@@ -128,15 +139,13 @@ twplot <- day_of_week %>%
         legend.key.width=unit(2, "cm"), 
         legend.key.height=unit(0.25, "cm")) +
   labs(y = "Hour of Arrest", x = "Day of Week", 
-       title = "Number of Burglaries and Silent Alarms by Hour and Day of Week") +
-  scale_fill_gradient(low = "white", 
-                      high = "purple", 
-                      labels = count) +
+       title = "Average Number of Burglaries and Silent Alarms before 3/16/2020") +
   scale_x_discrete(expand = c(0,0) , 
                    position = "top") + 
-  geom_text(aes(label = count), 
+  geom_text(aes(label = avg), 
             size = 3)
 twplot
+
 
 
 
